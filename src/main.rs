@@ -1,13 +1,22 @@
 use std::fs;
-use std::process::exit;
-use druid::widget::{Align, Button, FillStrat, Flex, Image, Label};
+use std::process::{exit, id};
+use druid::widget::{Align, Button, Painter, FillStrat, Flex, Image, Label, CrossAxisAlignment};
 use druid::{AppLauncher, ImageBuf, LocalizedString, PlatformError, Widget, WidgetExt, WindowDesc, WindowHandle, WindowLevel};
 use druid::{Data, Lens};
 use clap::Parser;
-use druid::Value::Size;
+use druid::Value::{Size};
 use image::{DynamicImage};
 use native_dialog::{FileDialog, MessageDialog, MessageType};
 use std::path::Path;
+use druid::RenderContext;
+use druid::{Env, LensExt, Command, Color};
+use druid::kurbo::BezPath;
+use druid::piet::{FontFamily, ImageFormat, InterpolationMode, Text, TextLayoutBuilder};
+use druid::widget::prelude::*;
+use druid::{
+    Affine, FontDescriptor, Point, Rect, TextLayout,
+};
+
 
 #[derive(Debug, Clone, Data, Lens)]
 struct AppState {
@@ -23,11 +32,48 @@ struct Args {
     path: String,
 }
 
-fn ui_builder(path: String, image: DynamicImage) -> impl Widget<u32> {
+struct DrawingWidget;
+
+impl Widget<AppState> for DrawingWidget {
+    fn event(&mut self, ctx: &mut druid::EventCtx, event: &druid::Event, data: &mut AppState, _env: &Env) {
+        // Handle user input events for drawing here
+
+        match event {
+            Event::MouseDown(e) => {
+                println!("{:?}", e);
+            }
+            _ => (),
+        }
+    }
+
+    fn lifecycle(&mut self, _ctx: &mut druid::LifeCycleCtx, _event: &druid::LifeCycle, _data: &AppState, _env: &Env) {}
+
+    fn update(&mut self, _ctx: &mut druid::UpdateCtx, _old_data: &AppState, _data: &AppState, _env: &Env) {}
+
+    fn layout(&mut self, _ctx: &mut druid::LayoutCtx, _bc: &druid::BoxConstraints, _data: &AppState, _env: &Env) -> druid::Size {
+        // Return the size of the drawing area
+        let arg = Args::parse();
+        let image_data = image::open(arg.path).unwrap();
+        let width = image_data.width();
+        let height = image_data.height();
+        druid::Size::new((width as f64)/3f64, (height as f64)/3f64)
+    }
+
+    fn paint(&mut self, ctx: &mut druid::PaintCtx, data: &AppState, env: &Env) {
+        let arg = Args::parse();
+        let image_data = image::open(arg.path).unwrap();
+        let width = image_data.width();
+        let height = image_data.height();
+        let image = ctx.make_image(width as usize, height as usize, &image_data.as_bytes(), ImageFormat::RgbaSeparate).unwrap();
+        ctx.draw_image(&image, Rect::new(0f64, 0f64, (image_data.width() as f64)/3f64, (image_data.height() as f64)/3f64), InterpolationMode::Bilinear);
+    }
+}
+
+fn ui_builder(path: String, image: DynamicImage) -> impl Widget<AppState> {
     // The label text will be computed dynamically based on the current locale and count
     let width = image.width();
     let height = image.height();
-    let img = Image::new(ImageBuf::from_dynamic_image(image)).fix_size((width as f64)/3f64, (height as f64)/3f64);
+
     let pen = Button::new("Pen️").padding(5.0);
     let zoom_out = Button::new("Zoom In").padding(5.0);
     let zoom_in = Button::new("Zoom Out").padding(5.0);
@@ -48,21 +94,11 @@ fn ui_builder(path: String, image: DynamicImage) -> impl Widget<u32> {
             }
         })
         .padding(5.0);
-    /*let text =
-        LocalizedString::new("hello-counter").with_arg("count", |data: &u32, _env| (*data).into());
-    let label = Label::new(text).padding(5.0).center();
-    let button = Button::new("increment")
-        .on_click(|_ctx, data: &mut u32, _env| *data += 1)
-        .padding(5.0);
 
-    let pen = Button::new("pen")
-        .on_click(|_ctx, data: &mut u32, _env| *data+=1)
-        .padding(5.0);*/
-
-    let first_row = Flex::row().with_child(pen).with_child(zoom_in).with_child(zoom_out).with_child(fit).padding(10.0);
-    let img_row = Flex::row().with_child(img).padding(10.0);
-    let second_row = Flex::row().with_child(save).with_child(delete).padding(10.0);
-    let container = Flex::column().with_child(first_row).with_child(img_row).with_child(second_row);
+    let first_row = Flex::row().with_child(pen).with_child(zoom_in).with_child(zoom_out).with_child(fit).padding(5.0);
+    let drawing_row = Flex::row().with_child(DrawingWidget).padding(5.0);
+    let second_row = Flex::row().with_child(save).with_child(delete).padding(5.0);
+    let container = Flex::column().with_child(first_row).with_child(drawing_row).with_child(second_row);
     Align::centered(container)
 }
 
@@ -83,10 +119,11 @@ fn main() -> Result<(), PlatformError> {
 
     let main_window = WindowDesc::new(ui_builder(arg.path.to_string(), image))
         .title(format!("Screen Crab Tools - {}", arg.path.to_string()))
-        .window_size((width as f64, height as f64));
+        .window_size((width as f64, height as f64))
+        .set_level(WindowLevel::AppWindow);
 
     let data = 0_u32;
     AppLauncher::with_window(main_window)
         .log_to_console()
-        .launch(data)
+        .launch(AppState{})
 }
