@@ -52,12 +52,20 @@ impl Widget<AppState> for DrawingWidget {
 
     fn layout(&mut self, _ctx: &mut druid::LayoutCtx, _bc: &druid::BoxConstraints, _data: &AppState, _env: &Env) -> druid::Size {
         // Return the size of the drawing area
-        druid::Size::new(1000.0, 400.0)
+        let arg = Args::parse();
+        let image_data = image::open(arg.path).unwrap();
+        let width = image_data.width();
+        let height = image_data.height();
+        druid::Size::new((width as f64)/3f64, (height as f64)/3f64)
     }
 
     fn paint(&mut self, ctx: &mut druid::PaintCtx, data: &AppState, env: &Env) {
-        // Implement your custom painting logic here
-        // You can use ctx to draw on the widget
+        let arg = Args::parse();
+        let image_data = image::open(arg.path).unwrap();
+        let width = image_data.width();
+        let height = image_data.height();
+        let image = ctx.make_image(width as usize, height as usize, &image_data.as_bytes(), ImageFormat::RgbaSeparate).unwrap();
+        ctx.draw_image(&image, Rect::new(0f64, 0f64, (image_data.width() as f64)/3f64, (image_data.height() as f64)/3f64), InterpolationMode::Bilinear);
     }
 }
 
@@ -65,8 +73,8 @@ fn ui_builder(path: String, image: DynamicImage) -> impl Widget<AppState> {
     // The label text will be computed dynamically based on the current locale and count
     let width = image.width();
     let height = image.height();
-    let img = Image::new(ImageBuf::from_dynamic_image(image)).fix_size((width as f64)/3f64, (height as f64)/3f64);
-    /*let pen = Button::new("Pen️").padding(5.0);
+
+    let pen = Button::new("Pen️").padding(5.0);
     let zoom_out = Button::new("Zoom In").padding(5.0);
     let zoom_in = Button::new("Zoom Out").padding(5.0);
     let fit = Button::new("Fit").padding(5.0);
@@ -85,17 +93,13 @@ fn ui_builder(path: String, image: DynamicImage) -> impl Widget<AppState> {
                 exit(0);
             }
         })
-        .padding(5.0);*/
+        .padding(5.0);
 
-    // let first_row = Flex::row().with_child(pen).with_child(zoom_in).with_child(zoom_out).with_child(fit).padding(10.0);
-    // let img_row = Flex::row().with_child(img).with_flex_child(DrawingWidget, 1.0).padding(10.0);
-    // let second_row = Flex::row().with_child(save).with_child(delete).padding(10.0);
-    // let container = Flex::column().with_child(first_row).with_child(img_row).with_child(second_row);
-    // Align::centered(container)
-
-    druid::widget::Flex::column()
-        .with_child(img)
-        .with_child(DrawingWidget)
+    let first_row = Flex::row().with_child(pen).with_child(zoom_in).with_child(zoom_out).with_child(fit).padding(5.0);
+    let drawing_row = Flex::row().with_child(DrawingWidget).padding(5.0);
+    let second_row = Flex::row().with_child(save).with_child(delete).padding(5.0);
+    let container = Flex::column().with_child(first_row).with_child(drawing_row).with_child(second_row);
+    Align::centered(container)
 }
 
 fn main() -> Result<(), PlatformError> {
