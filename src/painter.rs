@@ -1,11 +1,11 @@
 use crate::utils::{AppState, Action};
-use druid::{Rect, Widget};
+use druid::{Cursor, ImageBuf, Rect, Widget};
 use druid::RenderContext;
 use druid::{Env, Color};
 use druid::kurbo::{Circle, Line};
 use druid::piet::{ImageFormat, InterpolationMode};
-use druid::widget::prelude::*;
 use druid::piet::Image;
+use druid::Event;
 
 pub struct DrawingWidget;
 
@@ -28,7 +28,6 @@ impl Widget<AppState> for DrawingWidget {
                     Action::Highlighter(ref mut points) => { points.push(e.pos); }
                     Action::Eraser(ref mut points) => { /* TODO */ }
                     Action::Text(ref mut points) => { /* TODO */ }
-                    _ => {}
                 }
                 data.actions.push(action);
                 ctx.request_paint();
@@ -50,6 +49,7 @@ impl Widget<AppState> for DrawingWidget {
             }
             Event::MouseUp(e) => {
                 data.is_drawing = false;
+
             }
             _ => (),
         }
@@ -57,7 +57,8 @@ impl Widget<AppState> for DrawingWidget {
 
     fn lifecycle(&mut self, _ctx: &mut druid::LifeCycleCtx, _event: &druid::LifeCycle, _data: &AppState, _env: &Env) {}
 
-    fn update(&mut self, _ctx: &mut druid::UpdateCtx, _old_data: &AppState, _data: &AppState, _env: &Env) {}
+    fn update(&mut self, _ctx: &mut druid::UpdateCtx, _old_data: &AppState, _data: &AppState, _env: &Env) {
+    }
 
     fn layout(&mut self, ctx: &mut druid::LayoutCtx, _bc: &druid::BoxConstraints, data: &AppState, _env: &Env) -> druid::Size {
         // Return the size of the drawing area
@@ -69,32 +70,32 @@ impl Widget<AppState> for DrawingWidget {
     fn paint(&mut self, ctx: &mut druid::PaintCtx, data: &AppState, env: &Env) {
         let width = ctx.size().width;
         let height = ctx.size().height;
-        let image = ctx.make_image(data.image.width(), data.image.height(), data.image.raw_pixels(), ImageFormat::RgbaSeparate).unwrap();
-        ctx.draw_image(&image, Rect::new(0f64, 0f64, width, height), InterpolationMode::Bilinear);
+        let image = ctx.render_ctx.make_image(data.image.width(), data.image.height(), data.image.raw_pixels(), ImageFormat::RgbaSeparate).unwrap();
+        ctx.render_ctx.draw_image(&image, Rect::new(0f64, 0f64, width, height), InterpolationMode::Bilinear);
         for action in &data.actions {
             match action {
                 Action::Pencil(action) => {
-                    action.iter().for_each(|circle| ctx.fill(circle, &Color::BLACK));
+                    action.iter().for_each(|circle| ctx.render_ctx.fill(circle, &Color::BLACK));
                 }
                 Action::Highlighter(action) => {
                     if action.len() < 2 {
-                        ctx.fill(Circle::new(*action.last().unwrap(), 5.0), &druid::Color::BLACK.with_alpha(0.25));
+                        ctx.render_ctx.fill(Circle::new(*action.last().unwrap(), 5.0), &druid::Color::BLACK.with_alpha(0.25));
                     }
                     for pair in action.windows(2) {
                         if let [start, end] = pair {
                             let line = Line::new(*start, *end);
-                            ctx.stroke(line, &druid::Color::BLACK.with_alpha(0.25), 10.0);
+                            ctx.render_ctx.stroke(line, &druid::Color::BLACK.with_alpha(0.25), 10.0);
                         }
                     }
                 }
                 Action::Pen(action) => {
                     if action.len() < 2 {
-                        ctx.fill(Circle::new(*action.last().unwrap(), 1.0), &druid::Color::BLACK);
+                        ctx.render_ctx.fill(Circle::new(*action.last().unwrap(), 1.0), &druid::Color::BLACK);
                     }
                     for pair in action.windows(2) {
                         if let [start, end] = pair {
                             let line = Line::new(*start, *end);
-                            ctx.stroke(line, &druid::Color::BLACK, 2.0);
+                            ctx.render_ctx.stroke(line, &druid::Color::BLACK, 2.0);
                         }
                     }
                 }

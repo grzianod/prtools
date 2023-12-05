@@ -14,7 +14,7 @@ use druid::{LensExt};
 use druid::piet::{Text, TextLayoutBuilder};
 use druid::scroll_component::ScrollComponent;
 use druid::widget::prelude::*;
-use image::{DynamicImage, RgbImage};
+use image::{DynamicImage, ImageFormat, RgbImage};
 use crate::utils::{AppState, Selection};
 use crate::painter::DrawingWidget;
 
@@ -61,8 +61,12 @@ fn ui_builder() -> impl Widget<AppState> {
                 data.actions.push(redo_action);
             }
         });
-    let save = Button::new("Save").padding(5.0).on_click(|ctx, data: &mut AppState, env| {
-
+    let save = Button::new("Save").padding(5.0)
+        .on_click(|ctx, data: &mut AppState, env| {
+            let image = image::load_from_memory_with_format(data.image.raw_pixels(), ImageFormat::Png).unwrap();
+            if let Err(err) = image.save(data.image_path.to_string()) {
+                println!("{}", err);
+            }
     });
     let delete = Button::new("Delete")
         .on_click(move |ctx, data: &mut AppState, env| {
@@ -74,10 +78,12 @@ fn ui_builder() -> impl Widget<AppState> {
         .padding(5.0);
     let flipv = Button::new("Flip ↑").padding(5.0)
         .on_click(|ctx, data: &mut AppState, env| {
-
+            let image = image::open(data.image_path.to_string()).unwrap();
+            data.image = ImageBuf::from_dynamic_image(image.flipv());
+            ctx.request_paint();
     });
     let fliph = Button::new("Flip →").padding(5.0)
-        .on_click(|ctx, data, env| {
+        .on_click(|ctx, data: &mut AppState, env| {
         println!("SAVE");
     });
 
@@ -111,10 +117,10 @@ fn main() -> Result<(), PlatformError> {
 
     let monitor = Screen::get_monitors().first().unwrap().clone();
 
-    let image = image::open(arg.path.to_string()).unwrap();
+    let image = ImageBuf::from_file(arg.path.to_string()).unwrap();
     let image_width = image.width();
     let image_height = image.height();
-    let imagebuf = ImageBuf::from_dynamic_image(image);
+
 
     let main_window = WindowDesc::new(ui_builder())
         .title(format!("Screen Crab Tools - {}", arg.path.to_string()))
@@ -123,7 +129,7 @@ fn main() -> Result<(), PlatformError> {
 
 
     let initial_state = AppState::new(
-        imagebuf,
+        image,
         arg.path.to_string(),
         monitor
     );

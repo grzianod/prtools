@@ -29,7 +29,7 @@ pub enum Selection {
 
 impl Default for Selection {
     fn default() -> Self {
-        return Self::Pencil
+        return Self::Pen
     }
 }
 #[derive(PartialEq, Debug, Clone)]
