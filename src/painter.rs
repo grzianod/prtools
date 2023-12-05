@@ -1,9 +1,9 @@
-use crate::utils::{AppState, Args};
-use druid::{Rect, Widget};
-use clap::Parser;
+use crate::utils::{AppState};
+use druid::{Point, Rect, Widget};
 use druid::RenderContext;
 use druid::{Env, Color};
-use druid::piet::{ImageFormat, InterpolationMode, Text, };
+use druid::kurbo::{Circle, Line};
+use druid::piet::{ImageFormat, InterpolationMode, StrokeStyle, Text};
 use druid::widget::prelude::*;
 
 pub struct DrawingWidget;
@@ -12,13 +12,17 @@ impl Widget<AppState> for DrawingWidget {
     fn event(&mut self, ctx: &mut druid::EventCtx, event: &druid::Event, data: &mut AppState, _env: &Env) {
         // Handle user input events for drawing here
         match event {
+            Event::Zoom(value) => {
+                println!("Zoomed! {}", value);
+            }
             Event::MouseDown(e) => {
                 data.is_drawing = true;
+                data.drawing_points.push(Vec::new());
                 println!("{}", data.is_drawing);
             }
             Event::MouseMove(e) => {
                 if data.is_drawing {
-                    data.drawing_points.move_to(e.pos);
+                    data.drawing_points.last_mut().unwrap().push(e.pos);
                     println!("{:?}", data.drawing_points);
                     ctx.request_paint();
                 }
@@ -45,8 +49,16 @@ impl Widget<AppState> for DrawingWidget {
     fn paint(&mut self, ctx: &mut druid::PaintCtx, data: &AppState, env: &Env) {
         let width = ctx.size().width;
         let height = ctx.size().height;
-        let image = ctx.make_image(data.image.width() as usize, data.image.height() as usize, data.image.raw_pixels(), ImageFormat::RgbaSeparate).unwrap();
+        let image = ctx.make_image(data.image.width(), data.image.height(), data.image.raw_pixels(), ImageFormat::RgbaSeparate).unwrap();
         ctx.draw_image(&image, Rect::new(0f64, 0f64, width, height), InterpolationMode::Bilinear);
-        ctx.render_ctx.stroke(data.drawing_points.clone(), &Color::WHITE, 25.0);
+        for action in &data.drawing_points {
+            for pair in action.windows(2) {
+                if let [start, end] = pair {
+                    let line = Line::new(*start, *end);
+                    ctx.stroke(line, &druid::Color::BLACK, 2.0);
+                }
+            }
+        }
+
     }
 }

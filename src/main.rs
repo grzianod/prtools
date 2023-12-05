@@ -22,6 +22,8 @@ fn ui_builder() -> impl Widget<AppState> {
     let zoom_out = Button::new("Zoom In").padding(5.0);
     let zoom_in = Button::new("Zoom Out").padding(5.0);
     let fit = Button::new("Fit").padding(5.0);
+    let undo = Button::new("Undo").padding(5.0);
+    let redo = Button::new("Redo").padding(5.0);
     let save = Button::new("Save").padding(5.0).on_click(|ctx, data, env| {
         println!("SAVE");
     });
@@ -34,7 +36,7 @@ fn ui_builder() -> impl Widget<AppState> {
         })
         .padding(5.0);
 
-    let first_row = Flex::row().with_child(pen).with_child(zoom_in).with_child(zoom_out).with_child(fit).padding(5.0);
+    let first_row = Flex::row().with_child(pen).with_child(zoom_in).with_child(zoom_out).with_child(fit).with_child(undo).with_child(redo).padding(5.0);
     let drawing_row = Flex::row().with_child(DrawingWidget).padding(5.0);
     let second_row = Flex::row().with_child(save).with_child(delete).padding(5.0);
     let container = Flex::column().with_child(first_row).with_child(drawing_row).with_child(second_row);

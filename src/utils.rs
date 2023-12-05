@@ -1,11 +1,11 @@
 use native_dialog::{MessageDialog, MessageType};
 use std::path::Path;
-use druid::{ImageBuf, Monitor, Widget, WidgetExt};
+use druid::{ImageBuf, Monitor, Point, Widget, WidgetExt};
 use druid::{Data, Lens};
 use clap::Parser;
 use druid::RenderContext;
 use druid::{LensExt};
-use druid::kurbo::{BezPath};
+use druid::kurbo::{BezPath, Circle};
 use druid::piet::{Text, TextLayoutBuilder};
 use druid::widget::prelude::*;
 
@@ -21,7 +21,7 @@ pub struct Args {
 pub struct AppState {
     pub image: ImageBuf,
     #[data(same_fn = "PartialEq::eq")]
-    pub drawing_points: BezPath,
+    pub drawing_points: Vec<Vec<Point>>,
     pub is_drawing: bool,
     pub image_path: String,
     #[data(same_fn = "PartialEq::eq")]
@@ -30,7 +30,7 @@ pub struct AppState {
 
 impl AppState {
     pub fn new(image: ImageBuf, image_path: String, monitor: Monitor) -> Self {
-        AppState { image, drawing_points: BezPath::new(), is_drawing: false, image_path, monitor}
+        AppState { image, drawing_points: Vec::<Vec<Point>>::new(), is_drawing: false, image_path, monitor}
     }
 }
 
