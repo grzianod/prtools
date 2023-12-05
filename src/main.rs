@@ -49,20 +49,24 @@ fn main() -> Result<(), PlatformError> {
         exit(255);
     }
 
-    let monitor = Screen::get_monitors().first().unwrap().virtual_work_rect();
-
-    let main_window = WindowDesc::new(ui_builder())
-        .title(format!("Screen Crab Tools - {}", arg.path.to_string()))
-        .window_size((monitor.width()*8f64/10f64, monitor.height()*9f64/10f64))
-        .set_level(WindowLevel::AppWindow)
-        .resizable(false);
+    let monitor = Screen::get_monitors().first().unwrap().clone();
 
     let image = image::open(arg.path.to_string()).unwrap();
     let image_width = image.width();
     let image_height = image.height();
     let imagebuf = ImageBuf::from_dynamic_image(image);
 
-    let initial_state = AppState::new(imagebuf, arg.path.to_string(), image_width as f64, image_height as f64);
+    let main_window = WindowDesc::new(ui_builder())
+        .title(format!("Screen Crab Tools - {}", arg.path.to_string()))
+        .window_size((image_width as f64,image_height as f64))
+        .set_level(WindowLevel::AppWindow);
+
+
+    let initial_state = AppState::new(
+        imagebuf,
+        arg.path.to_string(),
+        monitor
+    );
     AppLauncher::with_window(main_window)
         .log_to_console()
         .configure_env(|env, _| {

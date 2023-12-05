@@ -37,13 +37,15 @@ impl Widget<AppState> for DrawingWidget {
 
     fn layout(&mut self, ctx: &mut druid::LayoutCtx, _bc: &druid::BoxConstraints, data: &AppState, _env: &Env) -> druid::Size {
         // Return the size of the drawing area
-        druid::Size::new((ctx.window().get_size().width)*8f64/10f64, (ctx.window().get_size().height)*8f64/10f64)
+        let width = ctx.window().get_size().width * 7.5f64/10f64;
+        let result = druid::Size::new(width, (data.image.height() as f64 * width )/data.image.width() as f64);
+        result
     }
 
     fn paint(&mut self, ctx: &mut druid::PaintCtx, data: &AppState, env: &Env) {
         let width = ctx.size().width;
         let height = ctx.size().height;
-        let image = ctx.make_image(data.image_width as usize, data.image_height as usize, data.image.raw_pixels(), ImageFormat::RgbaSeparate).unwrap();
+        let image = ctx.make_image(data.image.width() as usize, data.image.height() as usize, data.image.raw_pixels(), ImageFormat::RgbaSeparate).unwrap();
         ctx.draw_image(&image, Rect::new(0f64, 0f64, width, height), InterpolationMode::Bilinear);
         ctx.render_ctx.stroke(data.drawing_points.clone(), &Color::WHITE, 25.0);
     }

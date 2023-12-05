@@ -1,6 +1,6 @@
 use native_dialog::{MessageDialog, MessageType};
 use std::path::Path;
-use druid::{ImageBuf, Widget, WidgetExt};
+use druid::{ImageBuf, Monitor, Widget, WidgetExt};
 use druid::{Data, Lens};
 use clap::Parser;
 use druid::RenderContext;
@@ -24,13 +24,13 @@ pub struct AppState {
     pub drawing_points: BezPath,
     pub is_drawing: bool,
     pub image_path: String,
-    pub image_width: f64,
-    pub image_height: f64
+    #[data(same_fn = "PartialEq::eq")]
+    pub monitor: Monitor
 }
 
 impl AppState {
-    pub fn new(image: ImageBuf, image_path: String, image_width: f64, image_height: f64) -> Self {
-        AppState { image, drawing_points: BezPath::new(), is_drawing: false, image_path, image_width, image_height}
+    pub fn new(image: ImageBuf, image_path: String, monitor: Monitor) -> Self {
+        AppState { image, drawing_points: BezPath::new(), is_drawing: false, image_path, monitor}
     }
 }
 
