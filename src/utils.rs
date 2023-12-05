@@ -17,13 +17,52 @@ pub struct Args {
     #[arg(short, long)]
     pub path: String,
 }
+
+#[derive(PartialEq, Debug, Clone)]
+pub enum Selection {
+    Pencil,
+    Pen,
+    Highlighter,
+    Eraser,
+    Text
+}
+
+impl Default for Selection {
+    fn default() -> Self {
+        return Self::Pencil
+    }
+}
+#[derive(PartialEq, Debug, Clone)]
+pub enum Action {
+    Pencil(Vec<Circle>),
+    Pen(Vec<Point>),
+    Highlighter(Vec<Point>),
+    Eraser(Vec<Point>),
+    Text(String)
+}
+
+impl Action {
+    pub fn new(selection: &Selection) -> Self {
+        match selection {
+            Selection::Pen => { Self::Pen(Vec::new()) }
+            Selection::Pencil => { Self::Pencil(Vec::new()) }
+            Selection::Highlighter => { Self::Highlighter(Vec::new()) }
+            Selection::Eraser => { Self::Eraser(Vec::new()) }
+            Selection::Text => { Self::Text(String::new()) }
+        }
+    }
+}
+
+
 #[derive(Debug, Clone, Data, Lens)]
 pub struct AppState {
+    #[data(same_fn = "PartialEq::eq")]
+    pub selection: Selection,
     pub image: ImageBuf,
     #[data(same_fn = "PartialEq::eq")]
-    pub actions: Vec<Vec<Point>>,
+    pub actions: Vec<Action>,
     #[data(same_fn = "PartialEq::eq")]
-    pub redo_actions: Vec<Vec<Point>>,
+    pub redo_actions: Vec<Action>,
     pub is_drawing: bool,
     pub image_path: String,
     #[data(same_fn = "PartialEq::eq")]
@@ -32,7 +71,7 @@ pub struct AppState {
 
 impl AppState {
     pub fn new(image: ImageBuf, image_path: String, monitor: Monitor) -> Self {
-        AppState { image, actions: Vec::<Vec<Point>>::new(), redo_actions: Vec::<Vec<Point>>::new(), is_drawing: false, image_path, monitor}
+        AppState { selection: Selection::default(), image, actions: Vec::<Action>::new(), redo_actions: Vec::<Action>::new(), is_drawing: false, image_path, monitor}
     }
 }
 

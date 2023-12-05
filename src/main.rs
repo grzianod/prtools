@@ -1,27 +1,54 @@
+#![windows_subsystem = "windows"]
 mod utils;
 mod painter;
 
 use std::fs;
 use std::process::{exit};
-use druid::widget::{Align, Button, Flex};
-use druid::{AppLauncher, ImageBuf, PlatformError, Screen, Widget, WidgetExt, WindowDesc, WindowLevel};
+use druid::widget::{Align, Button, Flex, Scroll};
+use druid::{AppLauncher, ImageBuf, PlatformError, Screen, Widget, WidgetExt, WindowConfig, WindowDesc, WindowLevel};
 use druid::{Data, Lens};
 use clap::Parser;
 use clap::Args;
 use druid::RenderContext;
 use druid::{LensExt};
 use druid::piet::{Text, TextLayoutBuilder};
+use druid::scroll_component::ScrollComponent;
 use druid::widget::prelude::*;
-use crate::utils::AppState;
+use image::{DynamicImage, RgbImage};
+use crate::utils::{AppState, Selection};
 use crate::painter::DrawingWidget;
 
 fn ui_builder() -> impl Widget<AppState> {
     // The label text will be computed dynamically based on the current locale and count
 
-    let pen = Button::new("Pen️").padding(5.0);
-    let zoom_out = Button::new("Zoom In").padding(5.0);
-    let zoom_in = Button::new("Zoom Out").padding(5.0);
-    let fit = Button::new("Fit").padding(5.0);
+    let pencil = Button::new("Pencil").padding(5.0)
+        .on_click(|ctx, data: &mut AppState, env| {
+            data.selection = Selection::Pencil;
+        });
+    let pen = Button::new("Pen️").padding(5.0)
+        .on_click(|ctx, data: &mut AppState, env| {
+            data.selection = Selection::Pen;
+        });
+    let highlighter = Button::new("Highlighter").padding(5.0)
+        .on_click(|ctx, data: &mut AppState, env| {
+            data.selection = Selection::Highlighter;
+        });
+    let text = Button::new("Text").padding(5.0)
+        .on_click(|ctx, data: &mut AppState, env| {
+            data.selection = Selection::Text;
+        });
+    let zoom_out = Button::new("Zoom In").padding(5.0)
+        .on_click(|ctx, data: &mut AppState, env| {
+            /* TODO */
+        });
+    let zoom_in = Button::new("Zoom Out").padding(5.0)
+        .on_click(|ctx, data: &mut AppState, env| {
+            /* TODO */
+        });
+    let fit = Button::new("Fit").padding(5.0)
+        .on_click(|ctx, data: &mut AppState, env| {
+        /* TODO */
+    });
     let undo = Button::new("Undo").padding(5.0)
         .on_click(|ctx, data: &mut AppState, env| {
             if let Some(action) =  data.actions.pop() {
@@ -34,8 +61,8 @@ fn ui_builder() -> impl Widget<AppState> {
                 data.actions.push(redo_action);
             }
         });
-    let save = Button::new("Save").padding(5.0).on_click(|ctx, data, env| {
-        println!("SAVE");
+    let save = Button::new("Save").padding(5.0).on_click(|ctx, data: &mut AppState, env| {
+
     });
     let delete = Button::new("Delete")
         .on_click(move |ctx, data: &mut AppState, env| {
@@ -45,12 +72,33 @@ fn ui_builder() -> impl Widget<AppState> {
             }
         })
         .padding(5.0);
+    let flipv = Button::new("Flip ↑").padding(5.0)
+        .on_click(|ctx, data: &mut AppState, env| {
 
-    let first_row = Flex::row().with_child(pen).with_child(zoom_in).with_child(zoom_out).with_child(fit).with_child(undo).with_child(redo).padding(5.0);
+    });
+    let fliph = Button::new("Flip →").padding(5.0)
+        .on_click(|ctx, data, env| {
+        println!("SAVE");
+    });
+
+    let tools = Flex::row()
+        .with_child(pencil)
+        .with_child(pen)
+        .with_child(highlighter)
+        .with_child(text)
+        .with_child(zoom_in)
+        .with_child(zoom_out)
+        .with_child(fit)
+        .with_child(flipv)
+        .with_child(fliph)
+        .with_child(undo)
+        .with_child(redo)
+        .padding(5.0);
+    let first_row = Flex::column().with_child(tools).padding(5.0);
     let drawing_row = Flex::row().with_child(DrawingWidget).padding(5.0);
     let second_row = Flex::row().with_child(save).with_child(delete).padding(5.0);
     let container = Flex::column().with_child(first_row).with_child(drawing_row).with_child(second_row);
-    Align::centered(container)
+    Align::centered(Scroll::new(container))
 }
 
 fn main() -> Result<(), PlatformError> {
