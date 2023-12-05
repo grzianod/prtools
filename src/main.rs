@@ -24,11 +24,16 @@ fn ui_builder() -> impl Widget<AppState> {
     let fit = Button::new("Fit").padding(5.0);
     let undo = Button::new("Undo").padding(5.0)
         .on_click(|ctx, data: &mut AppState, env| {
-            if let None = data.drawing_points.pop() {
-
+            if let Some(action) =  data.actions.pop() {
+                data.redo_actions.push(action);
             }
         });
-    let redo = Button::new("Redo").padding(5.0);
+    let redo = Button::new("Redo").padding(5.0)
+        .on_click(|ctx, data: &mut AppState, env| {
+            if let Some(redo_action) = data.redo_actions.pop() {
+                data.actions.push(redo_action);
+            }
+        });
     let save = Button::new("Save").padding(5.0).on_click(|ctx, data, env| {
         println!("SAVE");
     });

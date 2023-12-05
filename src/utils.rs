@@ -21,7 +21,9 @@ pub struct Args {
 pub struct AppState {
     pub image: ImageBuf,
     #[data(same_fn = "PartialEq::eq")]
-    pub drawing_points: Vec<Vec<Point>>,
+    pub actions: Vec<Vec<Point>>,
+    #[data(same_fn = "PartialEq::eq")]
+    pub redo_actions: Vec<Vec<Point>>,
     pub is_drawing: bool,
     pub image_path: String,
     #[data(same_fn = "PartialEq::eq")]
@@ -30,7 +32,7 @@ pub struct AppState {
 
 impl AppState {
     pub fn new(image: ImageBuf, image_path: String, monitor: Monitor) -> Self {
-        AppState { image, drawing_points: Vec::<Vec<Point>>::new(), is_drawing: false, image_path, monitor}
+        AppState { image, actions: Vec::<Vec<Point>>::new(), redo_actions: Vec::<Vec<Point>>::new(), is_drawing: false, image_path, monitor}
     }
 }
 

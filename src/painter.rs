@@ -17,13 +17,13 @@ impl Widget<AppState> for DrawingWidget {
             }
             Event::MouseDown(e) => {
                 data.is_drawing = true;
-                data.drawing_points.push(Vec::new());
+                data.actions.push(Vec::new());
                 println!("{}", data.is_drawing);
             }
             Event::MouseMove(e) => {
                 if data.is_drawing {
-                    data.drawing_points.last_mut().unwrap().push(e.pos);
-                    println!("{:?}", data.drawing_points);
+                    data.actions.last_mut().unwrap().push(e.pos);
+                    println!("{:?}", data.actions);
                     ctx.request_paint();
                 }
             }
@@ -51,7 +51,7 @@ impl Widget<AppState> for DrawingWidget {
         let height = ctx.size().height;
         let image = ctx.make_image(data.image.width(), data.image.height(), data.image.raw_pixels(), ImageFormat::RgbaSeparate).unwrap();
         ctx.draw_image(&image, Rect::new(0f64, 0f64, width, height), InterpolationMode::Bilinear);
-        for action in &data.drawing_points {
+        for action in &data.actions {
             for pair in action.windows(2) {
                 if let [start, end] = pair {
                     let line = Line::new(*start, *end);
