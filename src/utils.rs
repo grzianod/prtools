@@ -1,13 +1,12 @@
-use native_dialog::{MessageDialog, MessageType};
 use std::path::Path;
-use druid::{ImageBuf, Monitor, Point, Widget, WidgetExt};
+use druid::{Color, ImageBuf, Monitor, Point, Widget, WidgetExt};
 use druid::{Data, Lens};
 use clap::Parser;
 use druid::RenderContext;
 use druid::{LensExt};
-use druid::kurbo::{BezPath, Circle};
-use druid::piet::{Text, TextLayoutBuilder};
+use druid::piet::{CoreGraphicsImage, Text, TextLayoutBuilder};
 use druid::widget::prelude::*;
+use tauri_dialog::DialogSelection;
 
 /// Annotation Tools
 #[derive(Parser, Debug)]
@@ -20,10 +19,8 @@ pub struct Args {
 
 #[derive(PartialEq, Debug, Clone)]
 pub enum Selection {
-    Pencil,
     Pen,
     Highlighter,
-    Eraser,
     Text
 }
 
@@ -34,10 +31,8 @@ impl Default for Selection {
 }
 #[derive(PartialEq, Debug, Clone)]
 pub enum Action {
-    Pencil(Vec<Circle>),
     Pen(Vec<Point>),
     Highlighter(Vec<Point>),
-    Eraser(Vec<Point>),
     Text(String)
 }
 
@@ -45,9 +40,7 @@ impl Action {
     pub fn new(selection: &Selection) -> Self {
         match selection {
             Selection::Pen => { Self::Pen(Vec::new()) }
-            Selection::Pencil => { Self::Pencil(Vec::new()) }
             Selection::Highlighter => { Self::Highlighter(Vec::new()) }
-            Selection::Eraser => { Self::Eraser(Vec::new()) }
             Selection::Text => { Self::Text(String::new()) }
         }
     }
@@ -66,29 +59,33 @@ pub struct AppState {
     pub is_drawing: bool,
     pub image_path: String,
     #[data(same_fn = "PartialEq::eq")]
-    pub monitor: Monitor
+    pub monitor: Monitor,
+    pub color: Color
 }
 
 impl AppState {
-    pub fn new(image: ImageBuf, image_path: String, monitor: Monitor) -> Self {
-        AppState { selection: Selection::default(), image, actions: Vec::<Action>::new(), redo_actions: Vec::<Action>::new(), is_drawing: false, image_path, monitor}
+    pub fn new(image: ImageBuf, image_path: String, monitor: Monitor, color: Color) -> Self {
+        AppState { selection: Selection::default(), image, actions: Vec::<Action>::new(), redo_actions: Vec::<Action>::new(), is_drawing: false, image_path, monitor, color }
     }
 }
 
 pub fn dialog_file_not_found(path: String) {
-    MessageDialog::new()
-        .set_type(MessageType::Error)
-        .set_title(&format!("File Not Found!"))
-        .set_text(&format!("No such file \"{}\".\nPlease check that the file exists and try again.", Path::new(path.as_str()).file_name().unwrap().to_str().unwrap()))
-        .show_alert()
-        .unwrap();
+    tauri_dialog::DialogBuilder::new()
+        .title("File Not Found!")
+        .message(&format!("No such file \"{}\".\nPlease check that the file exists and try again.", Path::new(path.as_str()).file_name().unwrap().to_str().unwrap()))
+        .style(tauri_dialog::DialogStyle::Error)
+        .buttons(tauri_dialog::DialogButtons::Quit)
+        .build()
+        .show();
 }
 
 pub fn dialog_delete_file(path: String) -> bool {
-    MessageDialog::new()
-        .set_type(MessageType::Warning)
-        .set_title(&format!("Are you sure you want to delete {}", path ))
-        .set_text(&format!("Tools will be closed and this item will be moved to Bin."))
-        .show_confirm()
-        .unwrap()
+    tauri_dialog::DialogBuilder::new()
+        .title(&format!("Are you sure you want to delete {}", path ))
+        .message(&format!("Tools will be closed and this item will be moved to Bin."))
+        .style(tauri_dialog::DialogStyle::Question)
+        .buttons(tauri_dialog::DialogButtons::YesNo)
+        .build()
+        .show()
+        .eq(&DialogSelection::Yes)
 }

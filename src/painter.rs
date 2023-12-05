@@ -7,6 +7,7 @@ use druid::piet::{ImageFormat, InterpolationMode};
 use druid::piet::Image;
 use druid::Event;
 
+
 pub struct DrawingWidget;
 
 impl Widget<AppState> for DrawingWidget {
@@ -23,10 +24,8 @@ impl Widget<AppState> for DrawingWidget {
                 data.is_drawing = true;
                 let mut action = Action::new(&data.selection);
                 match action {
-                    Action::Pencil(ref mut points) => { points.push(Circle::new(e.pos, 1.5)); }
                     Action::Pen(ref mut points) => { points.push(e.pos); }
                     Action::Highlighter(ref mut points) => { points.push(e.pos); }
-                    Action::Eraser(ref mut points) => { /* TODO */ }
                     Action::Text(ref mut points) => { /* TODO */ }
                 }
                 data.actions.push(action);
@@ -36,10 +35,8 @@ impl Widget<AppState> for DrawingWidget {
                 if data.is_drawing {
                     if let Some(action) = data.actions.last_mut() {
                         match action {
-                            Action::Pencil(points) => { points.push(Circle::new(e.pos, 1.5)); }
                             Action::Pen(points) => { points.push(e.pos); }
                             Action::Highlighter(points) => { points.push(e.pos); }
-                            Action::Eraser(points) => { /* TODO */ }
                             Action::Text(points) => { /* TODO */ }
                             _ => {}
                         }
@@ -74,32 +71,28 @@ impl Widget<AppState> for DrawingWidget {
         ctx.render_ctx.draw_image(&image, Rect::new(0f64, 0f64, width, height), InterpolationMode::Bilinear);
         for action in &data.actions {
             match action {
-                Action::Pencil(action) => {
-                    action.iter().for_each(|circle| ctx.render_ctx.fill(circle, &Color::BLACK));
-                }
                 Action::Highlighter(action) => {
                     if action.len() < 2 {
-                        ctx.render_ctx.fill(Circle::new(*action.last().unwrap(), 5.0), &druid::Color::BLACK.with_alpha(0.25));
+                        ctx.render_ctx.fill(Circle::new(*action.last().unwrap(), 5.0), &data.color.with_alpha(0.25));
                     }
                     for pair in action.windows(2) {
                         if let [start, end] = pair {
                             let line = Line::new(*start, *end);
-                            ctx.render_ctx.stroke(line, &druid::Color::BLACK.with_alpha(0.25), 10.0);
+                            ctx.render_ctx.stroke(line, &data.color.with_alpha(0.25), 10.0);
                         }
                     }
                 }
                 Action::Pen(action) => {
                     if action.len() < 2 {
-                        ctx.render_ctx.fill(Circle::new(*action.last().unwrap(), 1.0), &druid::Color::BLACK);
+                        ctx.render_ctx.fill(Circle::new(*action.last().unwrap(), 1.0), &data.color);
                     }
                     for pair in action.windows(2) {
                         if let [start, end] = pair {
                             let line = Line::new(*start, *end);
-                            ctx.render_ctx.stroke(line, &druid::Color::BLACK, 2.0);
+                            ctx.render_ctx.stroke(line, &data.color, 2.0);
                         }
                     }
                 }
-                Action::Eraser(action) => { /* TODO */ }
                 Action::Text(action) => { /* TODO */ }
                 _ => {}
             }
