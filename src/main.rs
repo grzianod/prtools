@@ -22,7 +22,12 @@ fn ui_builder() -> impl Widget<AppState> {
     let zoom_out = Button::new("Zoom In").padding(5.0);
     let zoom_in = Button::new("Zoom Out").padding(5.0);
     let fit = Button::new("Fit").padding(5.0);
-    let undo = Button::new("Undo").padding(5.0);
+    let undo = Button::new("Undo").padding(5.0)
+        .on_click(|ctx, data: &mut AppState, env| {
+            if let None = data.drawing_points.pop() {
+
+            }
+        });
     let redo = Button::new("Redo").padding(5.0);
     let save = Button::new("Save").padding(5.0).on_click(|ctx, data, env| {
         println!("SAVE");
