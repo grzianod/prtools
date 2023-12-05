@@ -1,6 +1,6 @@
 use std::fs;
 use std::process::{exit, id};
-use druid::widget::{Align, Button, Painter, FillStrat, Flex, Image, Label, CrossAxisAlignment};
+use druid::widget::{Align, Button, Painter, FillStrat, Flex, Image, Label, CrossAxisAlignment, BackgroundBrush};
 use druid::{AppLauncher, ImageBuf, LocalizedString, PlatformError, Widget, WidgetExt, WindowDesc, WindowHandle, WindowLevel};
 use druid::{Data, Lens};
 use clap::Parser;
@@ -10,7 +10,7 @@ use native_dialog::{FileDialog, MessageDialog, MessageType};
 use std::path::Path;
 use druid::RenderContext;
 use druid::{Env, LensExt, Command, Color};
-use druid::kurbo::BezPath;
+use druid::kurbo::{BezPath, PathEl};
 use druid::piet::{FontFamily, ImageFormat, InterpolationMode, Text, TextLayoutBuilder};
 use druid::widget::prelude::*;
 use druid::{
@@ -20,7 +20,15 @@ use druid::{
 
 #[derive(Debug, Clone, Data, Lens)]
 struct AppState {
-    // Define any application state data here
+    #[data(same_fn = "PartialEq::eq")]
+    drawing_points: BezPath,
+    is_drawing: bool
+}
+
+impl AppState {
+    pub fn new() -> Self {
+        AppState { drawing_points: BezPath::new(), is_drawing: false }
+    }
 }
 
 /// Annotation Tools
@@ -37,10 +45,21 @@ struct DrawingWidget;
 impl Widget<AppState> for DrawingWidget {
     fn event(&mut self, ctx: &mut druid::EventCtx, event: &druid::Event, data: &mut AppState, _env: &Env) {
         // Handle user input events for drawing here
-
         match event {
             Event::MouseDown(e) => {
-                println!("{:?}", e);
+                data.is_drawing = true;
+                println!("{}", data.is_drawing);
+            }
+            Event::MouseMove(e) => {
+                if data.is_drawing {
+                    data.drawing_points.move_to(e.pos);
+                    println!("{:?}", data.drawing_points);
+                    ctx.request_paint();
+                }
+            }
+            Event::MouseUp(e) => {
+                data.is_drawing = false;
+                println!("{}", data.is_drawing);
             }
             _ => (),
         }
@@ -50,7 +69,7 @@ impl Widget<AppState> for DrawingWidget {
 
     fn update(&mut self, _ctx: &mut druid::UpdateCtx, _old_data: &AppState, _data: &AppState, _env: &Env) {}
 
-    fn layout(&mut self, _ctx: &mut druid::LayoutCtx, _bc: &druid::BoxConstraints, _data: &AppState, _env: &Env) -> druid::Size {
+    fn layout(&mut self, ctx: &mut druid::LayoutCtx, _bc: &druid::BoxConstraints, _data: &AppState, _env: &Env) -> druid::Size {
         // Return the size of the drawing area
         let arg = Args::parse();
         let image_data = image::open(arg.path).unwrap();
@@ -66,6 +85,7 @@ impl Widget<AppState> for DrawingWidget {
         let height = image_data.height();
         let image = ctx.make_image(width as usize, height as usize, &image_data.as_bytes(), ImageFormat::RgbaSeparate).unwrap();
         ctx.draw_image(&image, Rect::new(0f64, 0f64, (image_data.width() as f64)/3f64, (image_data.height() as f64)/3f64), InterpolationMode::Bilinear);
+        ctx.stroke(data.drawing_points.clone(), &Color::WHITE, 0.5);
     }
 }
 
@@ -119,11 +139,11 @@ fn main() -> Result<(), PlatformError> {
 
     let main_window = WindowDesc::new(ui_builder(arg.path.to_string(), image))
         .title(format!("Screen Crab Tools - {}", arg.path.to_string()))
-        .window_size((width as f64, height as f64))
+        .window_size(((width as f64)/2.5, (height as f64)/2.5))
         .set_level(WindowLevel::AppWindow);
 
-    let data = 0_u32;
+    let initial_state = AppState::new();
     AppLauncher::with_window(main_window)
         .log_to_console()
-        .launch(AppState{})
+        .launch(initial_state)
 }
