@@ -4,7 +4,21 @@ use druid::{Color, ImageBuf};
 use druid_shell::RawMods;
 use crate::utils;
 use crate::utils::{AppState, Selection};
+use image::{DynamicImage, ImageBuffer, Rgba};
 
+fn convert_to_dynamic_image(image_buf: &ImageBuf) -> DynamicImage {
+    // Example conversion, this needs to match the actual format and layout of your ImageBuf
+    // This is just a placeholder and might not work directly with your ImageBuf
+    let raw_pixels = image_buf.raw_pixels();
+    let image = ImageBuffer::<Rgba<u8>, Vec<u8>>::from_raw(image_buf.width() as u32, image_buf.height() as u32, raw_pixels.to_vec()).unwrap();
+    DynamicImage::ImageRgba8(image)
+}
+
+// Implement the save function
+fn save_image(image_buf: &ImageBuf, path: &str) -> Result<(), image::ImageError> {
+    let dynamic_image = convert_to_dynamic_image(image_buf);
+    dynamic_image.save(path)
+}
 
 pub fn create_menu() -> druid::Menu<AppState> {
     druid::Menu::empty()
@@ -19,7 +33,14 @@ pub fn create_menu() -> druid::Menu<AppState> {
         )
         .entry(
             druid::Menu::new(druid::LocalizedString::new("File"))
-                .entry(druid::MenuItem::new("Save").hotkey(Some(RawMods::Meta), "S"))
+                .entry(druid::MenuItem::new("Save").hotkey(Some(RawMods::Meta), "S")
+                    .on_activate( move |ctx, data: &mut AppState, env| {
+                        if let Err(e) = save_image(&data.image, &data.image_path) {
+                            // Handle the error, e.g., show an error dialog
+                            eprintln!("Failed to save image: {}", e);
+                        }
+                    })
+                )
                 .entry(druid::MenuItem::new("Delete").hotkey(Some(RawMods::Meta), "D")
                     .on_activate(move |ctx, data: &mut AppState, env| {
                         if utils::dialog_delete_file(data.image_path.to_string()) {
@@ -46,10 +67,26 @@ pub fn create_menu() -> druid::Menu<AppState> {
                         data.selection = Selection::Highlighter;
                     }))
                 .entry(druid::Menu::new(druid::LocalizedString::new("Shapes"))
-                    .entry(druid::menu::MenuItem::new("Rectangle"))
-                    .entry(druid::menu::MenuItem::new("Circle"))
-                    .entry(druid::menu::MenuItem::new("Ellipse"))
+                    .entry(druid::menu::MenuItem::new("Rectangle")
+                    .on_activate(|ctx, data: &mut AppState, env| {
+                    data.selection = Selection::Rectangle;
+                
+                }))
+                    .entry(druid::menu::MenuItem::new("Circle").on_activate(
+                        |ctx, data: &mut AppState, env| {
+                            data.selection = Selection::Circle;
+                        }
+                    )) 
+                    .entry(druid::menu::MenuItem::new("Ellipse").on_activate(
+                        |ctx, data: &mut AppState, env| {
+                            data.selection = Selection::Ellipse;
+                        }
+                    ))  // TBI
                 )
+                .entry( druid::MenuItem::new("Arrow") 
+                    .on_activate(|ctx, data: &mut AppState, env| {
+                        data.selection = Selection::Arrow;
+                    }))
                 .entry(druid::MenuItem::new("Text").hotkey(Some(RawMods::Meta), "T")
                     .selected_if(|data: &AppState, env| {
                         data.selection.eq(&Selection::Text)

@@ -1,12 +1,8 @@
 use std::cell::Cell;
 use std::path::Path;
-use druid::{Color, ImageBuf, Monitor, Point, Widget, WidgetExt};
+use druid::{Color, ImageBuf, Monitor, Point};
 use druid::{Data, Lens};
 use clap::Parser;
-use druid::RenderContext;
-use druid::{LensExt};
-use druid::piet::{CoreGraphicsImage, Text, TextLayoutBuilder};
-use druid::widget::prelude::*;
 use tauri_dialog::DialogSelection;
 
 /// Annotation Tools
@@ -22,7 +18,11 @@ pub struct Args {
 pub enum Selection {
     Pen,
     Highlighter,
-    Text
+    Rectangle,
+    Circle,
+    Ellipse,
+    Arrow,
+    Text,
 }
 
 impl Default for Selection {
@@ -34,18 +34,28 @@ impl Default for Selection {
 pub enum Action {
     Pen(Vec<Point>, Cell<Color>),
     Highlighter(Vec<Point>, Cell<Color>),
-    Text(String, Cell<Color>)
+    Rectangle(Vec<Point>, Cell<Color>), // Stores rectangle points and color
+    Circle(Vec<Point>, Cell<Color>), // Stores circle points and color
+    Ellipse(Vec<Point>, Cell<Color>), // Stores ellipse points and color
+    Arrow(Vec<Point>, Cell<Color>), // Stores arrow points and color
+    Text(Point, String, Cell<Color>),  // Stores position, text, and color
 }
+
 
 impl Action {
     pub fn new(selection: &Selection) -> Self {
         match selection {
-            Selection::Pen => { Self::Pen(Vec::new(), Cell::new(Color::RED)) }
-            Selection::Highlighter => { Self::Highlighter(Vec::new(), Cell::new(Color::RED)) }
-            Selection::Text => { Self::Text(String::new(), Cell::new(Color::RED)) }
+            Selection::Pen => Self::Pen(Vec::new(), Cell::new(Color::RED)),
+            Selection::Highlighter => Self::Highlighter(Vec::new(), Cell::new(Color::RED)),            
+            Selection::Rectangle => Self::Rectangle(Vec::new(), Cell::new(Color::RED)),
+            Selection::Circle => Self::Circle(Vec::new(), Cell::new(Color::RED)), 
+            Selection::Ellipse => Self::Ellipse(Vec::new(), Cell::new(Color::RED)), 
+            Selection::Arrow => Self::Arrow(Vec::new(), Cell::new(Color::RED)), 
+            Selection::Text => Self::Text(Point::new(0.0, 0.0), String::new(), Cell::new(Color::RED)), //TBI
         }
     }
 }
+
 
 
 #[derive(Debug, Clone, Data, Lens)]
@@ -65,6 +75,7 @@ pub struct AppState {
     pub repaint: bool,
     pub is_picking_color: bool,
     pub custom_color: bool,
+    pub text_ready: bool, // Indicates if the text action is ready to be finalized
 }
 
 impl AppState {
@@ -80,7 +91,8 @@ impl AppState {
             color,
             repaint: false,
             is_picking_color: false,
-            custom_color: false
+            custom_color: false,
+            text_ready: false,
         }
     }
 }

@@ -5,20 +5,11 @@ mod menu;
 
 use std::fs;
 use std::process::{exit};
-use druid::widget::{Align, Button, Flex, Image, Label, Scroll};
-use druid::{AppLauncher, Color, ImageBuf, LocalizedString, PlatformError, Screen, TextAlignment, Widget, WidgetExt, WindowConfig, WindowDesc, WindowLevel, WindowSizePolicy};
-use druid::{Data, Lens};
+use druid::widget::{Align, Flex, Scroll};
+use druid::{AppLauncher, Color, ImageBuf, PlatformError, Screen, Widget, WidgetExt, WindowDesc};
 use clap::Parser;
-use clap::Args;
-use druid::RenderContext;
-use druid::{LensExt};
-use druid::piet::{Text, TextLayoutBuilder};
-use druid::widget::prelude::*;
-use crate::utils::{AppState, Selection};
+use crate::utils::{AppState};
 use crate::painter::DrawingWidget;
-use std::io::Read;
-use druid_shell::{HotKey, Menu, RawMods, SysMods};
-use image::EncodableLayout;
 
 
 fn ui_builder() -> impl Widget<AppState> {
