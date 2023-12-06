@@ -1,3 +1,4 @@
+use std::cell::Cell;
 use std::path::Path;
 use druid::{Color, ImageBuf, Monitor, Point, Widget, WidgetExt};
 use druid::{Data, Lens};
@@ -31,17 +32,17 @@ impl Default for Selection {
 }
 #[derive(PartialEq, Debug, Clone)]
 pub enum Action {
-    Pen(Vec<Point>),
-    Highlighter(Vec<Point>),
-    Text(String)
+    Pen(Vec<Point>, Cell<Color>),
+    Highlighter(Vec<Point>, Cell<Color>),
+    Text(String, Cell<Color>)
 }
 
 impl Action {
     pub fn new(selection: &Selection) -> Self {
         match selection {
-            Selection::Pen => { Self::Pen(Vec::new()) }
-            Selection::Highlighter => { Self::Highlighter(Vec::new()) }
-            Selection::Text => { Self::Text(String::new()) }
+            Selection::Pen => { Self::Pen(Vec::new(), Cell::new(Color::RED)) }
+            Selection::Highlighter => { Self::Highlighter(Vec::new(), Cell::new(Color::RED)) }
+            Selection::Text => { Self::Text(String::new(), Cell::new(Color::RED)) }
         }
     }
 }

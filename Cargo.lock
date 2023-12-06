@@ -2289,6 +2289,7 @@ version = "0.1.0"
 dependencies = [
  "clap",
  "druid",
+ "druid-shell",
  "image",
  "leptos",
  "tauri-dialog",

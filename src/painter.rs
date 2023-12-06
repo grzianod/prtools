@@ -24,9 +24,9 @@ impl Widget<AppState> for DrawingWidget {
                 data.is_drawing = true;
                 let mut action = Action::new(&data.selection);
                 match action {
-                    Action::Pen(ref mut points) => { points.push(e.pos); }
-                    Action::Highlighter(ref mut points) => { points.push(e.pos); }
-                    Action::Text(ref mut points) => { /* TODO */ }
+                    Action::Pen(ref mut points, ref color) => { points.push(e.pos); color.set(data.color); }
+                    Action::Highlighter(ref mut points, ref color) => { points.push(e.pos); color.set(data.color); }
+                    Action::Text(ref mut points, ref color) => { /* TODO */ }
                 }
                 data.actions.push(action);
                 ctx.request_paint();
@@ -35,9 +35,9 @@ impl Widget<AppState> for DrawingWidget {
                 if data.is_drawing {
                     if let Some(action) = data.actions.last_mut() {
                         match action {
-                            Action::Pen(points) => { points.push(e.pos); }
-                            Action::Highlighter(points) => { points.push(e.pos); }
-                            Action::Text(points) => { /* TODO */ }
+                            Action::Pen(points, color) => { points.push(e.pos); }
+                            Action::Highlighter(points, color) => { points.push(e.pos); }
+                            Action::Text(points, color) => { /* TODO */ }
                             _ => {}
                         }
                     }
@@ -71,29 +71,29 @@ impl Widget<AppState> for DrawingWidget {
         ctx.render_ctx.draw_image(&image, Rect::new(0f64, 0f64, width, height), InterpolationMode::Bilinear);
         for action in &data.actions {
             match action {
-                Action::Highlighter(action) => {
+                Action::Highlighter(action, color) => {
                     if action.len() < 2 {
-                        ctx.render_ctx.fill(Circle::new(*action.last().unwrap(), 5.0), &data.color.with_alpha(0.25));
+                        ctx.render_ctx.fill(Circle::new(*action.last().unwrap(), 5.0), &color.get().with_alpha(0.25));
                     }
                     for pair in action.windows(2) {
                         if let [start, end] = pair {
                             let line = Line::new(*start, *end);
-                            ctx.render_ctx.stroke(line, &data.color.with_alpha(0.25), 10.0);
+                            ctx.render_ctx.stroke(line, &color.get().with_alpha(0.25), 10.0);
                         }
                     }
                 }
-                Action::Pen(action) => {
+                Action::Pen(action, color) => {
                     if action.len() < 2 {
-                        ctx.render_ctx.fill(Circle::new(*action.last().unwrap(), 1.0), &data.color);
+                        ctx.render_ctx.fill(Circle::new(*action.last().unwrap(), 1.0), &color.get());
                     }
                     for pair in action.windows(2) {
                         if let [start, end] = pair {
                             let line = Line::new(*start, *end);
-                            ctx.render_ctx.stroke(line, &data.color, 2.0);
+                            ctx.render_ctx.stroke(line, &color.get(), 2.0);
                         }
                     }
                 }
-                Action::Text(action) => { /* TODO */ }
+                Action::Text(action, color) => { /* TODO */ }
                 _ => {}
             }
         }
