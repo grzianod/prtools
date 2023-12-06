@@ -55,25 +55,33 @@ impl Widget<AppState> for DrawingWidget {
                 let mut action = Action::new(&data.selection);
                 ctx.set_cursor(&Cursor::Crosshair);
                 match action {
-                    Action::Pen(ref mut points, ref color) => { points.push(e.pos); color.set(data.color); }
-                    Action::Highlighter(ref mut points, ref color) => { points.push(e.pos); color.set(data.color); }
-                    Action::Rectangle(ref mut start_point, ref mut end_point, ref color) => {
+                    Action::Pen(ref mut points, ref color, ref mut stroke) => { points.push(e.pos); color.set(data.color); stroke.set(data.stroke) }
+                    Action::Highlighter(ref mut points, ref color, ref stroke) => { points.push(e.pos); color.set(data.color); stroke.set(data.stroke) }
+                    Action::Rectangle(ref mut start_point, ref mut end_point, ref color, ref mut fill, ref mut stroke) => {
+                        start_point.set(e.pos);
+                        end_point.set(e.pos);
+                        fill.set(data.fill_color);
+                        color.set(data.color);
+                        stroke.set(data.stroke);
+                        // The second point (x1, y1) will be set on MouseUp
+                    }
+                    Action::Circle(ref mut center, ref mut radius, ref color, ref fill, ref mut stroke ) => {
+                        center.set(e.pos);
+                        fill.set(data.fill_color);
+                        color.set(data.color);
+                        stroke.set(data.stroke);
+                    }
+                    Action::Ellipse(ref mut points, ref color, ref fill, ref stroke) => {
+                        points.push(e.pos);
+                        fill.set(data.fill_color);
+                        color.set(data.color);
+                        stroke.set(data.stroke);
+                    }
+                    Action::Arrow(ref mut start_point, ref mut end_point, ref color, ref stroke) => {
                         start_point.set(e.pos);
                         end_point.set(e.pos);
                         color.set(data.color);
-                        // The second point (x1, y1) will be set on MouseUp
-                    }
-                    Action::Circle(ref mut center, ref mut radius, ref color ) => {
-                        center.set(e.pos);
-                        color.set(data.color);
-                    }
-                    Action::Ellipse(ref mut points, ref color) => {
-                        points.push(e.pos);
-                        color.set(data.color);
-                    }
-                    Action::Arrow(ref mut points, ref color) => {
-                        points.push(e.pos);
-                        color.set(data.color);
+                        stroke.set(data.stroke);
                     }
                     Action::Text(ref mut position, ref mut text, ref color) => {
                         *position = e.pos;
@@ -90,17 +98,18 @@ impl Widget<AppState> for DrawingWidget {
                 if data.is_drawing {
                     if let Some(action) = data.actions.last_mut() {
                         match action {
-                            Action::Pen(points, color) => { points.push(e.pos); }
-                            Action::Highlighter(points, color) => { points.push(e.pos); }
-                            Action::Rectangle(_, end_point, _) => {
+                            Action::Pen(points, color, _) => { points.push(e.pos); }
+                            Action::Highlighter(points, color, _) => { points.push(e.pos); }
+                            Action::Rectangle(_, end_point, _, _, _) => {
                                 end_point.set(e.pos);
                             }
-                            Action::Circle(center, radius, color) => {
+                            Action::Circle(center, radius, _, _, _) => {
                                 radius.set( f64::sqrt(num_traits::pow((center.get().x-e.pos.x),2) + num_traits::pow((center.get().y-e.pos.y), 2)));
                             }
-                            Action::Ellipse(points, color) => {
+                            Action::Ellipse(_, _, _, _) => {
                             }
-                            Action::Arrow(points, color) => {
+                            Action::Arrow(_, end_point, _, _) => {
+                                end_point.set(e.pos);
                             }
                             Action::Text(position, ref mut text, ref color) => {
 
@@ -123,17 +132,17 @@ impl Widget<AppState> for DrawingWidget {
                         return;
                     
                 }
-                if let Some(Action::Rectangle(start_point, end_point, _)) = data.actions.last_mut() {
+                if let Some(Action::Rectangle(_, end_point, _, _, _)) = data.actions.last_mut() {
                     end_point.set(e.pos);
                 }
-                if let Some(Action::Circle(center, radius, _)) = data.actions.last_mut() {
+                if let Some(Action::Circle(center, radius, _, _, _)) = data.actions.last_mut() {
                     radius.set( f64::sqrt(num_traits::pow((center.get().x-e.pos.x),2) + num_traits::pow((center.get().y-e.pos.y), 2)));
                 }
-                if let Some(Action::Ellipse(points, _)) = data.actions.last_mut() {
+                if let Some(Action::Ellipse(points, _, _, _)) = data.actions.last_mut() {
                     points.push(e.pos);
                 }
-                if let Some(Action::Arrow(points, color)) = data.actions.last_mut() {
-                    points.push(e.pos); // This sets the end point of the arrow
+                if let Some(Action::Arrow(_, _, _, _)) = data.actions.last_mut() {
+
                 }
                 if let Some(Action::Text(position, text, _)) = data.actions.last_mut() {
                     if data.text_ready {
@@ -171,60 +180,68 @@ impl Widget<AppState> for DrawingWidget {
         ctx.render_ctx.draw_image(&image, Rect::new(0f64, 0f64, width, height), InterpolationMode::Bilinear);
         for action in &data.actions {
             match action {
-                Action::Highlighter(action, color) => {
+                Action::Highlighter(action, color, stroke) => {
                     if action.len() < 2 {
-                        ctx.render_ctx.fill(Circle::new(*action.last().unwrap(), 5.0), &color.get().with_alpha(0.25));
+                        ctx.render_ctx.fill(Circle::new(*action.last().unwrap(), stroke.get()), &color.get().with_alpha(0.25));
                     }
                     for pair in action.windows(2) {
                         if let [start, end] = pair {
                             let line = Line::new(*start, *end);
-                            ctx.render_ctx.stroke(line, &color.get().with_alpha(0.25), 10.0);
+                            ctx.render_ctx.stroke(line, &color.get().with_alpha(0.25), stroke.get()*3f64);
                         }
                     }
                 }
-                Action::Pen(action, color) => {
+                Action::Pen(action, color, stroke) => {
                     if action.len() < 2 {
-                        ctx.render_ctx.fill(Circle::new(*action.last().unwrap(), 1.0), &color.get());
+                        ctx.render_ctx.fill(Circle::new(*action.last().unwrap(), stroke.get()/2f64), &color.get());
                     }
                     for pair in action.windows(2) {
                         if let [start, end] = pair {
                             let line = Line::new(*start, *end);
-                            ctx.render_ctx.stroke(line, &color.get(), 2.0);
+                            ctx.render_ctx.stroke(line, &color.get(), stroke.get());
                         }
                     }
                 }
-                Action::Rectangle(start_point, end_point, color) => {
-                    ctx.render_ctx.fill_even_odd( Rect::new( start_point.get().x, start_point.get().y, end_point.get().x, end_point.get().y) , &color.get());
-                }
-                Action::Circle(center, radius, color) => {
-                    ctx.render_ctx.fill_even_odd(Circle::new(center.get(), radius.get()), &data.color);
-                }
-                Action::Ellipse(points, color) => {
+                Action::Rectangle(start_point, end_point, color, fill, stroke) => {
+                    if fill.get() {
+                        ctx.render_ctx.fill_even_odd(Rect::new(start_point.get().x, start_point.get().y, end_point.get().x, end_point.get().y), &color.get());
+                    }
+                    else {
+                        ctx.render_ctx.stroke(Rect::new(start_point.get().x, start_point.get().y, end_point.get().x, end_point.get().y), &color.get(), stroke.get());
+                    }
+                    }
+                Action::Circle(center, radius, color, fill, stroke) => {
+                    if fill.get() {
+                        ctx.render_ctx.fill_even_odd(Circle::new(center.get(), radius.get()), &data.color);
+                    }
+                    else {
+                        ctx.render_ctx.stroke(Circle::new(center.get(), radius.get()), &data.color, stroke.get());
+                    }
+                    }
+                Action::Ellipse(points, color, fill, stroke) => {
                     let points = points.clone();
                     let start = points.first().unwrap();
                     let end = points.last().unwrap();
                     let ellipse_center = Point::new((start.x + end.x)/2.0, (start.y + end.y)/2.0);
                     let ellipse = Ellipse::new(ellipse_center, Vec2::new((start.x - end.x).abs()/2.0, (start.y - end.y).abs()/2.0), 0.0);
-                    ctx.render_ctx.stroke(ellipse, &color.get(), 2.0);
+                    ctx.render_ctx.stroke(ellipse, &color.get(), stroke.get());
                 }
-                Action::Arrow(points, color) => {
-                    if points.len() == 2 {
-                        let (start, end) = (points[0], points[1]);
+                Action::Arrow(start_point, end_point, color, stroke) => {
                         // Draw the line
-                        let line = Line::new(start, end);
-                        ctx.render_ctx.stroke(line, &color.get(), 2.0);
+                        let line = Line::new(start_point.get(), end_point.get());
+                        ctx.render_ctx.stroke(line, &color.get(), stroke.get());
                         // Calculate the arrowhead points
-                        let arrowhead_length = 10.0;
-                        let arrowhead_width = 5.0;
-                        let (left_point, right_point) = calculate_arrowhead(start, end, arrowhead_length, arrowhead_width);
+                        let arrowhead_length = stroke.get()*3f64;
+                        let arrowhead_width = stroke.get()*3f64;
+                        let (left_point, right_point) = calculate_arrowhead(start_point.get(), end_point.get(), arrowhead_length, arrowhead_width);
                         // Draw the arrowhead
-                        let arrowhead = Line::new(left_point, end);
-                        ctx.render_ctx.stroke(arrowhead, &color.get(), 2.0);
-                        let arrowhead = Line::new(right_point, end);
-                        ctx.render_ctx.stroke(arrowhead, &color.get(), 2.0);
-                    }
+                        let arrowhead = Line::new(left_point, end_point.get());
+                        ctx.render_ctx.stroke(arrowhead, &color.get(), stroke.get());
+                        let arrowhead = Line::new(right_point, end_point.get());
+                        ctx.render_ctx.stroke(arrowhead, &color.get(), stroke.get());
+
                 }
-                Action::Text(pos, text, color) => {
+                Action::Text(pos, text, _) => {
                     let layout = ctx.text().new_text_layout(text.to_string()).build().unwrap();
                     ctx.render_ctx.draw_text(&layout, *pos);
                 }

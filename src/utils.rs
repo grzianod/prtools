@@ -32,12 +32,12 @@ impl Default for Selection {
 }
 #[derive(PartialEq, Debug, Clone)]
 pub enum Action {
-    Pen(Vec<Point>, Cell<Color>),
-    Highlighter(Vec<Point>, Cell<Color>),
-    Rectangle(Cell<Point>, Cell<Point>, Cell<Color>), // Stores rectangle points and color
-    Circle(Cell<Point>, Cell<f64>, Cell<Color>), // Stores circle points and color
-    Ellipse(Vec<Point>, Cell<Color>), // Stores ellipse points and color
-    Arrow(Vec<Point>, Cell<Color>), // Stores arrow points and color
+    Pen(Vec<Point>, Cell<Color>, Cell<f64>),
+    Highlighter(Vec<Point>, Cell<Color>, Cell<f64>),
+    Rectangle(Cell<Point>, Cell<Point>, Cell<Color>, Cell<bool>, Cell<f64>), // Stores rectangle points and color
+    Circle(Cell<Point>, Cell<f64>, Cell<Color>, Cell<bool>, Cell<f64>), // Stores circle points and color
+    Ellipse(Vec<Point>, Cell<Color>, Cell<bool>, Cell<f64>), // Stores ellipse points and color
+    Arrow(Cell<Point>, Cell<Point>, Cell<Color>, Cell<f64>), // Stores arrow points and color
     Text(Point, String, Cell<Color>),  // Stores position, text, and color
 }
 
@@ -45,12 +45,12 @@ pub enum Action {
 impl Action {
     pub fn new(selection: &Selection) -> Self {
         match selection {
-            Selection::Pen => Self::Pen(Vec::new(), Cell::new(Color::RED)),
-            Selection::Highlighter => Self::Highlighter(Vec::new(), Cell::new(Color::RED)),            
-            Selection::Rectangle => Self::Rectangle(Cell::new(Point::ZERO), Cell::new(Point::ZERO), Cell::new(Color::RED)),
-            Selection::Circle => Self::Circle(Cell::new(Point::ZERO), Cell::new(0.0), Cell::new(Color::RED)),
-            Selection::Ellipse => Self::Ellipse(Vec::new(), Cell::new(Color::RED)), 
-            Selection::Arrow => Self::Arrow(Vec::new(), Cell::new(Color::RED)), 
+            Selection::Pen => Self::Pen(Vec::new(), Cell::new(Color::RED), Cell::new(2.0)),
+            Selection::Highlighter => Self::Highlighter(Vec::new(), Cell::new(Color::RED), Cell::new(2.0)),
+            Selection::Rectangle => Self::Rectangle(Cell::new(Point::ZERO), Cell::new(Point::ZERO), Cell::new(Color::RED), Cell::new(false), Cell::new(2.0)),
+            Selection::Circle => Self::Circle(Cell::new(Point::ZERO), Cell::new(0.0), Cell::new(Color::RED), Cell::new(false),Cell::new(2.0)),
+            Selection::Ellipse => Self::Ellipse(Vec::new(), Cell::new(Color::RED), Cell::new(false), Cell::new(2.0)),
+            Selection::Arrow => Self::Arrow(Cell::new(Point::ZERO), Cell::new(Point::ZERO), Cell::new(Color::RED), Cell::new(2.0)),
             Selection::Text => Self::Text(Point::new(0.0, 0.0), String::new(), Cell::new(Color::RED)), //TBI
         }
     }
@@ -75,6 +75,8 @@ pub struct AppState {
     pub repaint: bool,
     pub is_picking_color: bool,
     pub custom_color: bool,
+    pub fill_color: bool,
+    pub stroke: f64,
     pub text_ready: bool, // Indicates if the text action is ready to be finalized
 }
 
@@ -92,6 +94,8 @@ impl AppState {
             repaint: false,
             is_picking_color: false,
             custom_color: false,
+            fill_color: false,
+            stroke: 2.0,
             text_ready: false,
         }
     }
