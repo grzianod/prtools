@@ -45,6 +45,11 @@ pub fn create_menu() -> druid::Menu<AppState> {
                     .on_activate(|ctx, data: &mut AppState, env| {
                         data.selection = Selection::Highlighter;
                     }))
+                .entry(druid::Menu::new(druid::LocalizedString::new("Shapes"))
+                    .entry(druid::menu::MenuItem::new("Rectangle"))
+                    .entry(druid::menu::MenuItem::new("Circle"))
+                    .entry(druid::menu::MenuItem::new("Ellipse"))
+                )
                 .entry(druid::MenuItem::new("Text").hotkey(Some(RawMods::Meta), "T")
                     .selected_if(|data: &AppState, env| {
                         data.selection.eq(&Selection::Text)
@@ -118,6 +123,10 @@ pub fn create_menu() -> druid::Menu<AppState> {
                         data.repaint = true;
                     }))
                 .separator()
+                .entry(druid::MenuItem::new("Crop").hotkey(Some(RawMods::Meta), "K")
+                    .on_activate(|ctx, data: &mut AppState, env| {
+                        data.repaint = true;
+                    }))
                 .entry(druid::MenuItem::new("Rotate").hotkey(Some(RawMods::Meta), "R")
                     .on_activate(|ctx, data: &mut AppState, env| {
                         let image = image::open(data.image_path.to_string()).unwrap();
