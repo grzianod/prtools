@@ -18,6 +18,7 @@ use crate::utils::{AppState, Selection};
 use crate::painter::DrawingWidget;
 use std::io::Read;
 use druid_shell::{HotKey, Menu, RawMods, SysMods};
+use image::EncodableLayout;
 
 
 fn ui_builder() -> impl Widget<AppState> {
@@ -39,8 +40,8 @@ fn main() -> Result<(), PlatformError> {
 
 
     let monitor = Screen::get_monitors().first().unwrap().clone();
-
-    let image = ImageBuf::from_file(arg.path.to_string()).unwrap();
+    let img = image::open(arg.path.to_string()).unwrap();
+    let image = ImageBuf::from_dynamic_image(img);
     let image_width = image.width();
     let image_height = image.height();
 
@@ -60,8 +61,8 @@ fn main() -> Result<(), PlatformError> {
     );
     AppLauncher::with_window(main_window)
         .log_to_console()
-        .configure_env(|env, _| {
-            env.set(druid::theme::WINDOW_BACKGROUND_COLOR, druid::Color::WHITE);
+        .configure_env(move |env, _| {
+            env.set(druid::theme::WINDOW_BACKGROUND_COLOR, Color::TRANSPARENT);
             env.set(druid::theme::BUTTON_DARK, druid::Color::WHITE);
             env.set(druid::theme::SCROLLBAR_MAX_OPACITY, 0);
             env.set(druid::theme::BUTTON_LIGHT, druid::Color::WHITE);

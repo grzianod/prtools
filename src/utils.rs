@@ -61,12 +61,27 @@ pub struct AppState {
     pub image_path: String,
     #[data(same_fn = "PartialEq::eq")]
     pub monitor: Monitor,
-    pub color: Color
+    pub color: Color,
+    pub repaint: bool,
+    pub is_picking_color: bool,
+    pub custom_color: bool,
 }
 
 impl AppState {
     pub fn new(image: ImageBuf, image_path: String, monitor: Monitor, color: Color) -> Self {
-        AppState { selection: Selection::default(), image, actions: Vec::<Action>::new(), redo_actions: Vec::<Action>::new(), is_drawing: false, image_path, monitor, color }
+        AppState {
+            selection: Selection::default(),
+            image,
+            actions: Vec::<Action>::new(),
+            redo_actions: Vec::<Action>::new(),
+            is_drawing: false,
+            image_path,
+            monitor,
+            color,
+            repaint: false,
+            is_picking_color: false,
+            custom_color: false
+        }
     }
 }
 
