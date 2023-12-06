@@ -72,9 +72,9 @@ impl Widget<AppState> for DrawingWidget {
 
     fn lifecycle(&mut self, _ctx: &mut druid::LifeCycleCtx, _event: &druid::LifeCycle, _data: &AppState, _env: &Env) {}
 
-    fn update(&mut self, _ctx: &mut druid::UpdateCtx, _old_data: &AppState, _data: &AppState, _env: &Env) {
-        if _data.repaint {
-            _ctx.request_paint();
+    fn update(&mut self, ctx: &mut druid::UpdateCtx, _old_data: &AppState, data: &AppState, _env: &Env) {
+        if data.repaint {
+            ctx.request_paint();
         }
     }
 
