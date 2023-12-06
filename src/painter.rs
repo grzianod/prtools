@@ -4,9 +4,9 @@ use druid::RenderContext;
 use druid::{Env, Color};
 use druid::kurbo::{Circle, Line};
 use druid::piet::{ImageFormat, InterpolationMode};
-use druid::piet::Image;
 use druid::Event;
 use image::GenericImageView;
+use druid::widget::{Align, FillStrat, Image};
 use num_traits::cast::FromPrimitive;
 
 
@@ -80,9 +80,7 @@ impl Widget<AppState> for DrawingWidget {
 
     fn layout(&mut self, ctx: &mut druid::LayoutCtx, _bc: &druid::BoxConstraints, data: &AppState, _env: &Env) -> druid::Size {
         // Return the size of the drawing area
-        let width = ctx.window().get_size().width * 8f64/10f64;
-        let result = druid::Size::new(width, (data.image.height() as f64 * width )/data.image.width() as f64);
-        result
+        druid::Size::new(ctx.window().get_size().width, ctx.window().get_size().height - 28.0)
     }
 
     fn paint(&mut self, ctx: &mut druid::PaintCtx, data: &AppState, env: &Env) {

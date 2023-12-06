@@ -6,7 +6,7 @@ mod menu;
 use std::fs;
 use std::process::{exit};
 use druid::widget::{Align, Button, Flex, Image, Label, Scroll};
-use druid::{AppLauncher, Color, ImageBuf, LocalizedString, PlatformError, Screen, TextAlignment, Widget, WidgetExt, WindowConfig, WindowDesc, WindowLevel};
+use druid::{AppLauncher, Color, ImageBuf, LocalizedString, PlatformError, Screen, TextAlignment, Widget, WidgetExt, WindowConfig, WindowDesc, WindowLevel, WindowSizePolicy};
 use druid::{Data, Lens};
 use clap::Parser;
 use clap::Args;
@@ -22,9 +22,7 @@ use image::EncodableLayout;
 
 
 fn ui_builder() -> impl Widget<AppState> {
-
-    let drawing = Flex::row().with_child(DrawingWidget).padding(5.0);
-
+    let drawing = Flex::row().with_child(DrawingWidget).padding(0.0);
     Align::centered(Scroll::new(drawing))
 }
 
@@ -40,14 +38,25 @@ fn main() -> Result<(), PlatformError> {
 
 
     let monitor = Screen::get_monitors().first().unwrap().clone();
+
     let img = image::open(arg.path.to_string()).unwrap();
     let image = ImageBuf::from_dynamic_image(img);
+
     let image_width = image.width();
     let image_height = image.height();
 
+    let mut window_width = image_width as f64 * 4f64/10f64;
+    let mut window_height = ((image_height as f64 * window_width)/image_width as f64);
+
+    //if image is too tiny, set a fixed window size
+    if window_width < monitor.virtual_work_rect().width()/3f64 || window_height < monitor.virtual_work_rect().width()/3f64 {
+        window_width = monitor.virtual_work_rect().width()/3f64;
+        window_height = monitor.virtual_work_rect().width()/3f64;
+    }
+
     let main_window = WindowDesc::new(ui_builder())
         .title(format!("Screen Crab Tools [{}]", arg.path.to_string()))
-        .window_size((image_width as f64,image_height as f64))
+        .window_size((window_width, window_height))
         .menu(|id, data, env| {
             menu::create_menu()
         });
