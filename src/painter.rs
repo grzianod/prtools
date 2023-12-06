@@ -57,13 +57,14 @@ impl Widget<AppState> for DrawingWidget {
                 match action {
                     Action::Pen(ref mut points, ref color) => { points.push(e.pos); color.set(data.color); }
                     Action::Highlighter(ref mut points, ref color) => { points.push(e.pos); color.set(data.color); }
-                    Action::Rectangle(ref mut points, ref color) => {
-                        points.push(e.pos); 
+                    Action::Rectangle(ref mut start_point, ref mut end_point, ref color) => {
+                        start_point.set(e.pos);
+                        end_point.set(e.pos);
                         color.set(data.color);
                         // The second point (x1, y1) will be set on MouseUp
                     }
-                    Action::Circle(ref mut points, ref color ) => {
-                        points.push(e.pos);
+                    Action::Circle(ref mut center, ref mut radius, ref color ) => {
+                        center.set(e.pos);
                         color.set(data.color);
                     }
                     Action::Ellipse(ref mut points, ref color) => {
@@ -91,9 +92,11 @@ impl Widget<AppState> for DrawingWidget {
                         match action {
                             Action::Pen(points, color) => { points.push(e.pos); }
                             Action::Highlighter(points, color) => { points.push(e.pos); }
-                            Action::Rectangle(points, color) => { 
+                            Action::Rectangle(_, end_point, _) => {
+                                end_point.set(e.pos);
                             }
-                            Action::Circle(points, color) => {
+                            Action::Circle(center, radius, color) => {
+                                radius.set( f64::sqrt(num_traits::pow((center.get().x-e.pos.x),2) + num_traits::pow((center.get().y-e.pos.y), 2)));
                             }
                             Action::Ellipse(points, color) => {
                             }
@@ -120,11 +123,11 @@ impl Widget<AppState> for DrawingWidget {
                         return;
                     
                 }
-                if let Some(Action::Rectangle(points, _)) = data.actions.last_mut() {
-                    points.push(e.pos); // Set the second point (x1, y1)
+                if let Some(Action::Rectangle(start_point, end_point, _)) = data.actions.last_mut() {
+                    end_point.set(e.pos);
                 }
-                if let Some(Action::Circle(points, _)) = data.actions.last_mut() {
-                    points.push(e.pos);
+                if let Some(Action::Circle(center, radius, _)) = data.actions.last_mut() {
+                    radius.set( f64::sqrt(num_traits::pow((center.get().x-e.pos.x),2) + num_traits::pow((center.get().y-e.pos.y), 2)));
                 }
                 if let Some(Action::Ellipse(points, _)) = data.actions.last_mut() {
                     points.push(e.pos);
@@ -142,6 +145,7 @@ impl Widget<AppState> for DrawingWidget {
                 }
                 data.is_drawing = false;
                 ctx.set_cursor(&Cursor::Arrow);
+                ctx.request_paint();
             }
             _ => (),
         }
@@ -189,19 +193,11 @@ impl Widget<AppState> for DrawingWidget {
                         }
                     }
                 }
-                Action::Rectangle(rect, color) => {
-                    let rect = rect.clone();
-                    let start = rect.first().unwrap();
-                    let end = rect.last().unwrap();
-                    ctx.render_ctx.fill( Rect::new( start.x, start.y, end.x, end.y) , &color.get());
+                Action::Rectangle(start_point, end_point, color) => {
+                    ctx.render_ctx.fill_even_odd( Rect::new( start_point.get().x, start_point.get().y, end_point.get().x, end_point.get().y) , &color.get());
                 }
-                Action::Circle(points, color) => {
-                    let points = points.clone();
-                    let start = points.first().unwrap();
-                    let end = points.last().unwrap();
-                    let circle_center = Point::new((start.x + end.x)/2.0, (start.y + end.y)/2.0);
-                    let circle = Circle::new(circle_center, (start.x - end.x).abs()/2.0);
-                    ctx.render_ctx.stroke(circle, &color.get(), 2.0);
+                Action::Circle(center, radius, color) => {
+                    ctx.render_ctx.fill_even_odd(Circle::new(center.get(), radius.get()), &data.color);
                 }
                 Action::Ellipse(points, color) => {
                     let points = points.clone();

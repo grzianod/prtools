@@ -34,8 +34,8 @@ impl Default for Selection {
 pub enum Action {
     Pen(Vec<Point>, Cell<Color>),
     Highlighter(Vec<Point>, Cell<Color>),
-    Rectangle(Vec<Point>, Cell<Color>), // Stores rectangle points and color
-    Circle(Vec<Point>, Cell<Color>), // Stores circle points and color
+    Rectangle(Cell<Point>, Cell<Point>, Cell<Color>), // Stores rectangle points and color
+    Circle(Cell<Point>, Cell<f64>, Cell<Color>), // Stores circle points and color
     Ellipse(Vec<Point>, Cell<Color>), // Stores ellipse points and color
     Arrow(Vec<Point>, Cell<Color>), // Stores arrow points and color
     Text(Point, String, Cell<Color>),  // Stores position, text, and color
@@ -47,8 +47,8 @@ impl Action {
         match selection {
             Selection::Pen => Self::Pen(Vec::new(), Cell::new(Color::RED)),
             Selection::Highlighter => Self::Highlighter(Vec::new(), Cell::new(Color::RED)),            
-            Selection::Rectangle => Self::Rectangle(Vec::new(), Cell::new(Color::RED)),
-            Selection::Circle => Self::Circle(Vec::new(), Cell::new(Color::RED)), 
+            Selection::Rectangle => Self::Rectangle(Cell::new(Point::ZERO), Cell::new(Point::ZERO), Cell::new(Color::RED)),
+            Selection::Circle => Self::Circle(Cell::new(Point::ZERO), Cell::new(0.0), Cell::new(Color::RED)),
             Selection::Ellipse => Self::Ellipse(Vec::new(), Cell::new(Color::RED)), 
             Selection::Arrow => Self::Arrow(Vec::new(), Cell::new(Color::RED)), 
             Selection::Text => Self::Text(Point::new(0.0, 0.0), String::new(), Cell::new(Color::RED)), //TBI
