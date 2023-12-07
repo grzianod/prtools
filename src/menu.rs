@@ -1,10 +1,11 @@
 use std::fs;
 use std::process::exit;
-use druid::{Color, commands, ImageBuf};
+use druid::{Color, commands, Event, ImageBuf};
 use druid_shell::RawMods;
 use crate::utils;
 use crate::utils::{AppState, Selection};
 use image::{DynamicImage, ImageBuffer, Rgba};
+use notify_rust::Notification;
 
 fn convert_to_dynamic_image(image_buf: &ImageBuf) -> DynamicImage {
     // Example conversion, this needs to match the actual format and layout of your ImageBuf
@@ -31,12 +32,11 @@ pub fn create_menu() -> druid::Menu<AppState> {
          .entry(druid::MenuItem::new("Quit Screen Crab Tools").hotkey(Some(RawMods::Meta), "Q").command(commands::QUIT_APP));
 
     let file = druid::Menu::new(druid::LocalizedString::new("File"))
+        .entry(druid::platform_menus::common::paste())
+        .separator()
         .entry(druid::MenuItem::new("Save").hotkey(Some(RawMods::Meta), "S")
             .on_activate( move |ctx, data: &mut AppState, env| {
-                if let Err(e) = save_image(&data.image, &data.image_path) {
-                    // Handle the error, e.g., show an error dialog
-                    eprintln!("Failed to save image: {}", e);
-                }
+
             })
         )
         .entry(druid::MenuItem::new("Delete").hotkey(Some(RawMods::Meta), "D")
