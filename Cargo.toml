@@ -1,5 +1,6 @@
 [package]
 name = "screen-crab-tools"
+description = "A companion image manipulation app for Screen Crab"
 version = "0.1.0"
 edition = "2021"
 
@@ -15,7 +16,7 @@ num-traits = "0.2.17"
 kurbo = "0.10.4"
 cargo-bundle = "0.6.0"
 
-[package.metadata.bundle.tools.Tools]
+[package.metadata.bundle]
 name = "Tools"
 identifier = "com.screencrab.tools"
 icon = ["icons/icon*.png"]
@@ -25,7 +26,5 @@ short_description = "A companion image manipulation app for Screen Crab"
 long_description = """
 An application that allows to edit a captured image via Screen Crab
 """
+osx_minimum_system_version = "10.11"
 
-[[tools]]
-name = "Tools"
-path = "src/main.rs"
