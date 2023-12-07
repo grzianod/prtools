@@ -105,6 +105,7 @@ impl Widget<AppState> for DrawingWidget {
                     Action::Text(ref mut position, ref mut text, ref mut color) => {
                         if data.is_writing_text { return; }
                         *position = e.pos;
+                        *color = data.color;
                         // Set a flag or state indicating that text input is needed
                         data.is_writing_text = true;
                     }
@@ -163,9 +164,10 @@ impl Widget<AppState> for DrawingWidget {
                 if let Some(Action::Arrow(_, _, _, _)) = data.actions.last_mut() {
 
                 }
-                if let Some(Action::Text(position, text, _)) = data.actions.last_mut() {
+                if let Some(Action::Text(position, text, color)) = data.actions.last_mut() {
                     if data.is_writing_text { return; }
                     *position = e.pos;
+                    *color = data.color;
                     // Set a flag or state indicating that text input is needed
                     data.is_writing_text = true;
                 }
@@ -258,8 +260,8 @@ impl Widget<AppState> for DrawingWidget {
                         let arrowhead = Line::new(right_point, *end_point);
                         ctx.render_ctx.stroke(arrowhead, color, *stroke);
                 }
-                Action::Text(pos, text, _) => {
-                    let layout = ctx.text().new_text_layout(text.to_string()).build().unwrap();
+                Action::Text(pos, text, color) => {
+                    let layout = ctx.text().new_text_layout(text.to_string()).text_color(*color).build().unwrap();
                     ctx.render_ctx.draw_text(&layout, *pos);
                 }
             }
