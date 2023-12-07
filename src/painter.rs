@@ -66,7 +66,7 @@ impl Widget<AppState> for DrawingWidget {
                 }
             }
             Event::Zoom(value) => {
-                println!("Zoomed! {}", value);
+                println!("zoomed! {}", value);
             }
             Event::MouseDown(e) => {
                 if data.is_picking_color { ctx.set_cursor(&Cursor::Pointer); return; }
