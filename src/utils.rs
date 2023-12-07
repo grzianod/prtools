@@ -1,6 +1,5 @@
-use std::cell::Cell;
 use std::path::Path;
-use druid::{Color, ImageBuf, Monitor, Point};
+use druid::{Color, ImageBuf, Monitor, Point, Size};
 use druid::{Data, Lens};
 use clap::Parser;
 use tauri_dialog::DialogSelection;
@@ -51,7 +50,7 @@ impl Action {
             Selection::Circle => Self::Circle(Point::ZERO, 0.0, Color::RED, false,2.0),
             Selection::Ellipse => Self::Ellipse(Point::ZERO, Point::ZERO, Color::RED, false, 2.0),
             Selection::Arrow => Self::Arrow(Point::ZERO, Point::ZERO, Color::RED, 2.0),
-            Selection::Text => Self::Text(Point::ZERO, String::from("test"), Color::RED), //TBI
+            Selection::Text => Self::Text(Point::ZERO, String::from("test") ,Color::RED), //TBI
         }
     }
 }

@@ -23,6 +23,7 @@ fn save_image(image_buf: &ImageBuf, path: &str) -> Result<(), image::ImageError>
 
 pub fn create_menu() -> druid::Menu<AppState> {
 
+    #[cfg(target_os = "macos")]
     let about = druid::Menu::new(druid::LocalizedString::new("Screen Crab Tools"))
         .entry(druid::MenuItem::new("About Screen Crab Tools").command(commands::SHOW_ABOUT))
         .separator()
@@ -221,7 +222,7 @@ pub fn create_menu() -> druid::Menu<AppState> {
                 }))
         )
         .entry(druid::Menu::new(druid::LocalizedString::new("Stroke"))
-            .entry(druid::MenuItem::new("2pt")
+            .entry(druid::MenuItem::new("2 pt")
                 .on_activate(|ctx, data: &mut AppState, env| {
                     data.stroke = 2.0;
                 })
@@ -229,7 +230,7 @@ pub fn create_menu() -> druid::Menu<AppState> {
                     data.stroke == 2.0
                 })
             )
-            .entry(druid::MenuItem::new("3pt")
+            .entry(druid::MenuItem::new("3 pt")
                 .on_activate(|ctx, data: &mut AppState, env| {
                     data.stroke = 3.0;
                 })
@@ -237,12 +238,30 @@ pub fn create_menu() -> druid::Menu<AppState> {
                     data.stroke == 3.0
                 })
             )
-            .entry(druid::MenuItem::new("5pt")
+            .entry(druid::MenuItem::new("5 pt")
                 .on_activate(|ctx, data: &mut AppState, env| {
                     data.stroke = 5.0;
                 })
                 .selected_if(|data: &AppState, env| {
                     data.stroke == 5.0
+                })
+            )
+        )
+        .entry(druid::Menu::new(druid::LocalizedString::new("Font Size"))
+            .entry(druid::MenuItem::new("Normal")
+                .on_activate(|ctx, data: &mut AppState, env| {
+
+                })
+                .selected_if(|data: &AppState, env| {
+                    false
+                })
+            )
+            .entry(druid::MenuItem::new("Large")
+                .on_activate(|ctx, data: &mut AppState, env| {
+
+                })
+                .selected_if(|data: &AppState, env| {
+                        false
                 })
             )
         );

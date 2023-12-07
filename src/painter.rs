@@ -1,5 +1,5 @@
 use crate::utils::{AppState, Action};
-use druid::{Cursor, Rect, Widget, WidgetExt, WindowDesc, AppLauncher, WindowConfig, Code};
+use druid::{Cursor, Rect, Widget, WidgetExt, WindowDesc, AppLauncher, WindowConfig, Code, TextLayout};
 use druid::RenderContext;
 use druid::{Env, Color};
 use druid::{Data, Lens};
@@ -25,18 +25,6 @@ struct TextInputState {
     text: String,
 }
 
-fn text_input_window() -> WindowDesc<TextInputState> {
-    let layout = Flex::column()
-        .with_child(TextBox::new().lens(TextInputState::text))
-        .with_child(Button::new("Submit").on_click(|ctx, data: &mut TextInputState, _env| {
-            // Handle text submission here
-            // For example, you might want to update some shared state
-            // or close the text input window
-        }));
-
-    WindowDesc::new(layout)
-}
-
 pub struct DrawingWidget;
 
 impl Widget<AppState> for DrawingWidget {
@@ -44,6 +32,7 @@ impl Widget<AppState> for DrawingWidget {
         // Handle user input events for drawing here
         match event {
             Event::KeyDown(key) => {
+                println!("here");
                 if data.is_writing_text {
                     if key.code.eq(&Code::Enter) {
                         data.is_writing_text = false;
@@ -260,8 +249,8 @@ impl Widget<AppState> for DrawingWidget {
                         let arrowhead = Line::new(right_point, *end_point);
                         ctx.render_ctx.stroke(arrowhead, color, *stroke);
                 }
-                Action::Text(pos, text, color) => {
-                    let layout = ctx.text().new_text_layout(text.to_string()).text_color(*color).build().unwrap();
+                Action::Text(pos, text,color) => {
+                    let layout = ctx.text().new_text_layout(text.to_string()).build().unwrap();
                     ctx.render_ctx.draw_text(&layout, *pos);
                 }
             }
