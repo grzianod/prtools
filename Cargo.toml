@@ -17,12 +17,12 @@ kurbo = "0.10.4"
 cargo-bundle = "0.6.0"
 
 [package.metadata.bundle]
-name = "Tools"
+name = "Screen Crab Tools"
 identifier = "com.screencrab.tools"
-icon = ["icons/icon*.png"]
+icon = ["icons/Square*.png"]
 version = "0.1.0"
 category = "Utility"
-short_description = "A companion image manipulation app for Screen Crab"
+short_description = "A companion image manipulation application for Screen Crab"
 long_description = """
 An application that allows to edit a captured image via Screen Crab
 """

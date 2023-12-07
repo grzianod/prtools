@@ -1,6 +1,6 @@
 use std::fs;
 use std::process::exit;
-use druid::{Color, ImageBuf};
+use druid::{Color, commands, ImageBuf};
 use druid_shell::RawMods;
 use crate::utils;
 use crate::utils::{AppState, Selection};
@@ -22,13 +22,13 @@ fn save_image(image_buf: &ImageBuf, path: &str) -> Result<(), image::ImageError>
 
 pub fn create_menu() -> druid::Menu<AppState> {
 
-    let about = druid::Menu::new(druid::LocalizedString::new("Tools"))
-        .entry(druid::platform_menus::mac::application::about())
+    let about = druid::Menu::new(druid::LocalizedString::new("Screen Crab Tools"))
+        .entry(druid::MenuItem::new("About Screen Crab Tools").command(commands::SHOW_ABOUT))
         .separator()
-        .entry(druid::platform_menus::mac::application::hide())
-        .entry(druid::platform_menus::mac::application::hide_others())
+        .entry(druid::MenuItem::new("Hide Screen Crab Tools").hotkey(Some(RawMods::Meta), "H").command(commands::HIDE_APPLICATION))
+        .entry(druid::MenuItem::new("Hide Others").hotkey(Some(RawMods::AltMetaShift), "H").command(commands::HIDE_OTHERS))
         .separator()
-        .entry(druid::platform_menus::mac::application::quit());
+         .entry(druid::MenuItem::new("Quit Screen Crab Tools").hotkey(Some(RawMods::Meta), "Q").command(commands::QUIT_APP));
 
     let file = druid::Menu::new(druid::LocalizedString::new("File"))
         .entry(druid::MenuItem::new("Save").hotkey(Some(RawMods::Meta), "S")
