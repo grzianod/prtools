@@ -1,8 +1,8 @@
 use std::fs;
 use std::process::exit;
-use druid::{Affine, Color, commands, Event, ImageBuf};
+use druid::{Affine, Color, commands, Env, Event, ImageBuf};
 use crate::utils;
-use crate::utils::{AppState, Selection};
+use crate::utils::{Action, AppState, Selection};
 use image::{DynamicImage, ImageBuffer, Rgba};
 use notify_rust::Notification;
 use druid::RawMods;
@@ -254,20 +254,54 @@ pub fn create_menu() -> druid::Menu<AppState> {
         );
 
     let actions =  druid::Menu::new(druid::LocalizedString::new("Actions"))
-        .entry(druid::MenuItem::new("Undo").hotkey(Some(RawMods::Meta), "Z")
+        .entry(druid::MenuItem::new(|data: &AppState, env: &Env| {
+            if let Some(last) = data.actions.last() {
+                match last {
+                    Action::Pen(_, _, _, _) => { return format!("Undo Pen"); }
+                    Action::Highlighter(_, _, _, _) => { return format!("Undo Highlighter"); }
+                    Action::Arrow(_, _, _, _, _) => { return format!("Undo Arrow"); }
+                    Action::Rectangle(_, _, _, _, _, _) => { return format!("Undo Rectangle"); }
+                    Action::Circle(_, _, _, _, _, _) => { return format!("Undo Circle"); }
+                    Action::Ellipse(_, _, _, _, _, _) => { return format!("Undo Ellipse"); }
+                    Action::Text(_, _, _, _) => { return format!("Undo Text"); }
+                }
+            }
+            else { return "Undo".to_string(); }
+        }).hotkey(Some(RawMods::Meta), "Z")
             .on_activate(|ctx, data: &mut AppState, env| {
                 if let Some(action) =  data.actions.pop() {
                     data.redo_actions.push(action);
                 }
                 data.repaint = true;
-            }))
-        .entry(druid::MenuItem::new("Redo").hotkey(Some(RawMods::MetaShift), "Z")
+            })
+            .enabled_if(|data: &AppState, env| {
+                data.actions.len() > 0
+            })
+        )
+        .entry(druid::MenuItem::new(|data: &AppState, env: &Env| {
+            if let Some(last) = data.redo_actions.last() {
+                match last {
+                    Action::Pen(_, _, _, _) => { return format!("Redo Pen"); }
+                    Action::Highlighter(_, _, _, _) => { return format!("Redo Highlighter"); }
+                    Action::Arrow(_, _, _, _, _) => { return format!("Redo Arrow"); }
+                    Action::Rectangle(_, _, _, _, _, _) => { return format!("Redo Rectangle"); }
+                    Action::Circle(_, _, _, _, _, _) => { return format!("Redo Circle"); }
+                    Action::Ellipse(_, _, _, _, _, _) => { return format!("Redo Ellipse"); }
+                    Action::Text(_, _, _, _) => { return format!("Redo Text"); }
+                }
+            }
+            else { return "Redo".to_string(); }
+        }).hotkey(Some(RawMods::MetaShift), "Z")
             .on_activate(|ctx, data: &mut AppState, env| {
                 if let Some(redo_action) = data.redo_actions.pop() {
                     data.actions.push(redo_action);
                 }
                 data.repaint = true;
-            }))
+            })
+            .enabled_if(|data: &AppState, env| {
+                data.redo_actions.len() > 0
+            })
+        )
         .separator()
         .entry(druid::MenuItem::new("Crop").hotkey(Some(RawMods::Meta), "K")
             .on_activate(|ctx, data: &mut AppState, env| {
@@ -275,7 +309,6 @@ pub fn create_menu() -> druid::Menu<AppState> {
             }))
         .entry(druid::MenuItem::new("Rotate").hotkey(Some(RawMods::Meta), "R")
             .on_activate(|ctx, data: &mut AppState, env| {
-
                 data.repaint = true;
             }))
         .entry(druid::MenuItem::new("Flip Vertical").hotkey(Some(RawMods::Meta), "L")
@@ -299,6 +332,7 @@ pub fn create_menu() -> druid::Menu<AppState> {
                 data.repaint = true;
                 data.repaint = true;
             }));
+
 
     #[cfg(target_os = "macos")] {
         return druid::Menu::empty()

@@ -492,17 +492,12 @@ impl Widget<AppState> for DrawingWidget {
                 }
             }
         }
-        #[cfg(not(target_os = "macos"))]
+
         if data.save {
             
             let dx = ctx.to_window(Point::new(0f64, 0f64)).x as u32;
             let dy = ctx.to_window(Point::new(0f64, 0f64)).y as u32;
             println!("{} {}", dx, dy);
-            /*
-            let image = ctx.render_ctx.capture_image_area(Rect::new(0.0, 0.0, width, height)).unwrap();
-            //save the image on file at data.image_path
-            save_image(image, data.image_path.as_str()).unwrap();
-            */
             let screens = Screen::all().unwrap();
             let screen = screens.first().unwrap();
             let x = ctx.window().get_position().x as i32;
