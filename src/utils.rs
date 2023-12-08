@@ -3,7 +3,6 @@ use std::path::Path;
 use druid::{Affine, Color, ImageBuf, Monitor, Point, Size};
 use druid::{Data, Lens};
 use clap::Parser;
-use druid::piet::CoreGraphicsImage;
 use tauri_dialog::DialogSelection;
 
 /// Annotation Tools

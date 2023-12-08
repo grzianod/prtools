@@ -4,7 +4,7 @@ use druid::RenderContext;
 use druid::{Env, Color};
 use druid::{Data, Lens};
 use druid::kurbo::{Circle, Line, Point, Vec2, Ellipse};
-use druid::piet::{CoreGraphicsImage, ImageFormat, InterpolationMode};
+use druid::piet::{ImageFormat, InterpolationMode};
 use druid::Event;
 use image::GenericImageView;
 use num_traits::cast::FromPrimitive;
