@@ -9,7 +9,7 @@ use druid::Event;
 use image::GenericImageView;
 use num_traits::cast::FromPrimitive;
 use druid::piet::{Text, TextLayoutBuilder};
-use cocoa::appkit::{
+/*use cocoa::appkit::{
     CGFloat, NSApp, NSApplication, NSAutoresizingMaskOptions, NSBackingStoreBuffered, NSColor,
     NSEvent, NSView, NSViewHeightSizable, NSViewWidthSizable, NSWindow, NSWindowStyleMask,
 };
@@ -23,7 +23,7 @@ use core_graphics::display::CGSize;
 use core_graphics::image::CGImage;
 use core_graphics::sys::CGContextRef;
 use druid_shell::piet;
-use druid::piet::CoreGraphicsContext;
+use druid::piet::CoreGraphicsContext;*/
 
 fn calculate_arrowhead(start: Point, end: Point, arrowhead_length: f64, arrowhead_width: f64) -> (Point, Point) {
     let direction = (end - start).normalize();

@@ -16,8 +16,6 @@ kurbo = "0.10.4"
 cargo-bundle = "0.6.0"
 notify-rust = "4.10.0"
 core-graphics = "0.23.1"
-cocoa = "0.25.0"
-objc = "0.2.7"
 druid-shell = "0.8.3"
 
 [package.metadata.bundle]
