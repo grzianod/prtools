@@ -1,8 +1,8 @@
 use std::thread;
 use std::time::Duration;
 
-use crate::utils::{AppState, Action, Transformation};
-use druid::{Cursor, Rect, Widget, WidgetExt, WindowDesc, AppLauncher, WindowConfig, Code, TextLayout, ImageBuf, Affine, FontDescriptor, FontFamily};
+use crate::utils::{AppState, Action, Transformation, Selection};
+use druid::{Cursor, Rect, Widget, WidgetExt, WindowDesc, AppLauncher, WindowConfig, Code, TextLayout, ImageBuf, Affine, FontDescriptor, FontFamily, PaintCtx};
 use druid::RenderContext;
 use druid::{Env, Color};
 use druid::{Data, Lens};
@@ -153,6 +153,15 @@ impl Widget<AppState> for DrawingWidget {
                         // Set a flag or state indicating that text input is needed
                         data.is_writing_text = true;
                     }
+                    Action::Crop(ref mut prev_image, ref mut start_point, ref mut end_point) => {
+                        let x = ctx.window().get_position().x;
+                        let y = ctx.window().get_position().y + 30.0;
+                        let width = ctx.window().get_size().width;
+                        let height = ctx.window().get_size().height - 30.0;
+                        *prev_image = capture_image_area(Rect::new(x, y, width, height));
+                        *start_point = e.pos;
+                        *end_point = e.pos;
+                    }
                 }
                 data.actions.push(action);
                 ctx.request_paint();
@@ -178,6 +187,9 @@ impl Widget<AppState> for DrawingWidget {
                                 *end_point = e.pos;
                             }
                             Action::Arrow(_, _, end_point, _, _) => {
+                                *end_point = e.pos;
+                            }
+                            Action::Crop(_, _, end_point) => {
                                 *end_point = e.pos;
                             }
                             _ => {}
@@ -214,6 +226,32 @@ impl Widget<AppState> for DrawingWidget {
                     *color = data.color;
                     // Set a flag or state indicating that text input is needed
                     data.is_writing_text = true;
+                }
+                if let Some(Action::Crop(prev_image, start_point, end_point)) = data.actions.last_mut() {
+                    *end_point = e.pos;
+                    data.crop.set(false);
+                    #[cfg(target_os = "windows")] {
+                        let dx = ctx.to_window(Point::new(0f64, 0f64)).x as u32;
+                        let dy = ctx.to_window(Point::new(0f64, 0f64)).y as u32;
+                        let x = ctx.window().get_position().x as i32;
+                        let y = ctx.window().get_position().y as i32;
+                        let width = ctx.window().get_size().width as u32;
+                        let height = ctx.window().get_size().height as u32;
+                        let title_bar_height = unsafe { GetSystemMetrics(SM_CYCAPTION) } as u32;
+                        #[cfg(not(target_os = "macos"))]
+                        thread::sleep(Duration::from_millis(300));
+                        let image = screen.capture_area(x + dx as i32, y + dy as i32, width, height).unwrap();
+                        image.save(data.image_path.as_str()).unwrap();
+                    }
+                    #[cfg(target_os = "macos")] {
+                        let x = ctx.window().get_position().x;
+                        let y = ctx.window().get_position().y + 30.0;
+                        data.image =  prev_image.crop((x+start_point.x) as u32, (y+start_point.y) as u32, (x+end_point.x) as u32, (y+end_point.y) as u32);
+                    }
+
+                    #[cfg(target_os="linux")] {
+
+                    }
                 }
                 data.is_drawing = false;
                 data.update.set(true);
@@ -254,17 +292,15 @@ impl Widget<AppState> for DrawingWidget {
             if data.affine == Affine::FLIP_X {
                 ctx.transform(Affine::translate((-width, 0.0)));
             }
-
-            let image = ctx.render_ctx.make_image(data.image.width(), data.image.height(), data.image.raw_pixels(), ImageFormat::RgbaSeparate).unwrap();
+            let img = ImageBuf::from_dynamic_image(data.image.clone());
+            let image = ctx.render_ctx.make_image(img.width(), img.height(), img.raw_pixels(), ImageFormat::RgbaSeparate).unwrap();
             ctx.render_ctx.draw_image(&image, Rect::new(0f64, 0f64, width, height), InterpolationMode::Bilinear);
         });
 
         let width = ctx.size().width;
         let height = ctx.size().height;
 
-        /*let result = draw_with_cgcontext(ctx);
-        let w = result.as_ref().width();
-        println!("{}", w);*/
+
 
         for action in &data.actions {
             match action {
@@ -490,35 +526,37 @@ impl Widget<AppState> for DrawingWidget {
                         layout.draw(ctx, *pos);
                     });
                 }
+                Action::Crop(_, start_point, end_point) => {
+                    if data.crop.get() {
+                        let background_color = Color::rgba(1.0, 1.0, 1.0, 0.1); // Blue with 50% transparency
+                        ctx.fill(Rect::from_points(*start_point, *end_point), &background_color);
+
+                        // Set the border color
+                        let border_color = Color::GRAY;
+
+                        // Draw the border
+                        let border_width = 2.0;
+                        let border_rect = Rect::from_points(*start_point, *end_point).inset(-border_width / 2.0);
+                        ctx.stroke(border_rect, &border_color, border_width);
+                    }
+                }
             }
         }
 
         if data.save.get() {
-            let screens = Screen::all().unwrap();
-            let screen = screens.first().unwrap();
-            #[cfg(target_os = "windows")] {
-                let dx = ctx.to_window(Point::new(0f64, 0f64)).x as u32;
-                let dy = ctx.to_window(Point::new(0f64, 0f64)).y as u32;
-                let x = ctx.window().get_position().x as i32;
-                let y = ctx.window().get_position().y as i32;
-                let width = ctx.window().get_size().width as u32;
-                let height = ctx.window().get_size().height as u32;
-                let title_bar_height = unsafe { GetSystemMetrics(SM_CYCAPTION) } as u32;
-                #[cfg(not(target_os = "macos"))]
-                thread::sleep(Duration::from_millis(300));
-                let image = screen.capture_area(x + dx as i32, y + dy as i32, width, height).unwrap();
-                image.save(data.image_path.as_str()).unwrap();
-            }
-            #[cfg(target_os = "macos")] {
-                let x = ctx.window().get_position().x;
-                let y = ctx.window().get_position().y;
-                let width = ctx.window().get_size().width;
-                let height = ctx.window().get_size().height;
-                let image = screen.capture_area(x as i32, (y+30.0) as i32, width as u32, (height-30.0) as u32).unwrap();
-                image.save(data.image_path.to_string()).unwrap();
-            }
-
-        data.save.set(false);
+            let x = ctx.window().get_position().x;
+            let y = ctx.window().get_position().y + 30.0;
+            let width = ctx.window().get_size().width;
+            let height = ctx.window().get_size().height - 30.0;
+            let image = capture_image_area(Rect::new(x,y,width, height));
+            image.save(data.image_path.to_string()).unwrap();
+            data.save.set(false);
         }
     }
+}
+
+fn capture_image_area(rect: Rect) -> DynamicImage {
+    let screens = Screen::all().unwrap();
+    let screen = screens.first().unwrap();
+    image::DynamicImage::ImageRgba8(screen.capture_area(rect.x0 as i32, rect.y0 as i32, rect.x1 as u32, rect.y1 as u32).unwrap())
 }

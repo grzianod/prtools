@@ -14,7 +14,7 @@ use crate::painter::DrawingWidget;
 
 fn ui_builder() -> impl Widget<AppState> {
     let drawing = Flex::row().with_child(DrawingWidget).padding(0.0);
-    Align::centered(drawing)
+    Align::centered(Scroll::new(drawing))
 }
 
 fn main() -> Result<(), PlatformError> {
@@ -30,8 +30,7 @@ fn main() -> Result<(), PlatformError> {
 
     let monitor = Screen::get_monitors().first().unwrap().clone();
 
-    let img = image::open(arg.path.to_string()).unwrap();
-    let image = ImageBuf::from_dynamic_image(img);
+    let image = image::open(arg.path.to_string()).unwrap();
 
     let image_width = image.width();
     let image_height = image.height();

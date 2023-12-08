@@ -3,6 +3,7 @@ use std::path::Path;
 use druid::{Affine, Color, ImageBuf, Monitor, Point, Size};
 use druid::{Data, Lens};
 use clap::Parser;
+use image::DynamicImage;
 use tauri_dialog::DialogSelection;
 
 /// Annotation Tools
@@ -23,6 +24,7 @@ pub enum Selection {
     Ellipse,
     Arrow,
     Text,
+    Crop,
 }
 
 impl Default for Selection {
@@ -39,6 +41,7 @@ pub enum Action {
     Ellipse(Affine, Point, Point, Color, bool, f64), // Stores ellipse points and color
     Arrow(Affine, Point, Point, Color, f64), // Stores arrow points and color
     Text(Affine, Point, String, Color),  // Stores position, text, and color
+    Crop(DynamicImage, Point, Point),
 }
 
 
@@ -51,7 +54,8 @@ impl Action {
             Selection::Circle => Self::Circle(Affine::IDENTITY,Point::ZERO, 0.0, Color::RED, false,2.0),
             Selection::Ellipse => Self::Ellipse(Affine::IDENTITY,Point::ZERO, Point::ZERO, Color::RED, false, 2.0),
             Selection::Arrow => Self::Arrow(Affine::IDENTITY,Point::ZERO, Point::ZERO, Color::RED, 2.0),
-            Selection::Text => Self::Text(Affine::IDENTITY,Point::ZERO, String::from("test") ,Color::RED), //TBI
+            Selection::Text => Self::Text(Affine::IDENTITY,Point::ZERO, String::from("test") ,Color::RED),
+            Selection::Crop => Self::Crop(DynamicImage::default(), Point::ZERO, Point::ZERO),
         }
     }
 }
@@ -71,7 +75,8 @@ pub struct AppState {
     pub affine: Affine,
     #[data(same_fn = "PartialEq::eq")]
     pub selection: Selection,
-    pub image: ImageBuf,
+    #[data(same_fn = "PartialEq::eq")]
+    pub image: DynamicImage,
     #[data(same_fn = "PartialEq::eq")]
     pub actions: Vec<Action>,
     #[data(same_fn = "PartialEq::eq")]
@@ -92,10 +97,12 @@ pub struct AppState {
     #[data(same_fn = "PartialEq::eq")]
     pub update: Cell<bool>,
     pub zoom: f64,
+    #[data(same_fn = "PartialEq::eq")]
+    pub crop: Cell<bool>
 }
 
 impl AppState {
-    pub fn new(image: ImageBuf, image_path: String, monitor: Monitor, color: Color) -> Self {
+    pub fn new(image: DynamicImage, image_path: String, monitor: Monitor, color: Color) -> Self {
         AppState {
             affine: Affine::IDENTITY,
             selection: Selection::default(),
@@ -115,6 +122,7 @@ impl AppState {
             update: Cell::new(false),
             zoom: 1f64,
             save: Cell::new(false),
+            crop: Cell::new(false),
         }
     }
 }

@@ -264,6 +264,7 @@ pub fn create_menu() -> druid::Menu<AppState> {
                     Action::Circle(_, _, _, _, _, _) => { return format!("Undo Circle"); }
                     Action::Ellipse(_, _, _, _, _, _) => { return format!("Undo Ellipse"); }
                     Action::Text(_, _, _, _) => { return format!("Undo Text"); }
+                    Action::Crop(_, _, _) => { return format!("Undo Crop"); }
                 }
             }
             else { return "Undo".to_string(); }
@@ -288,6 +289,7 @@ pub fn create_menu() -> druid::Menu<AppState> {
                     Action::Circle(_, _, _, _, _, _) => { return format!("Redo Circle"); }
                     Action::Ellipse(_, _, _, _, _, _) => { return format!("Redo Ellipse"); }
                     Action::Text(_, _, _, _) => { return format!("Redo Text"); }
+                    Action::Crop(_, _, _) => { return format!("Redo Crop"); }
                 }
             }
             else { return "Redo".to_string(); }
@@ -305,6 +307,8 @@ pub fn create_menu() -> druid::Menu<AppState> {
         .separator()
         .entry(druid::MenuItem::new("Crop").hotkey(Some(RawMods::Meta), "K")
             .on_activate(|ctx, data: &mut AppState, env| {
+                data.selection = Selection::Crop;
+                data.crop.set(true);
                 data.repaint = true;
             }))
         .entry(druid::MenuItem::new("Rotate").hotkey(Some(RawMods::Meta), "R")
