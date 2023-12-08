@@ -23,7 +23,7 @@ pub fn create_menu() -> druid::Menu<AppState> {
         .separator()
         .entry(druid::MenuItem::new("Save").hotkey(Some(RawMods::Meta), "S")
             .on_activate( move |ctx, data: &mut AppState, env| {
-                data.save = true;
+                data.save.set(true);
                 data.repaint = true;
             })
         )

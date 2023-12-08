@@ -87,7 +87,8 @@ pub struct AppState {
     pub fill_color: bool,
     pub stroke: f64,
     pub is_writing_text: bool,
-    pub save: bool,
+    #[data(same_fn = "PartialEq::eq")]
+    pub save: Cell<bool>,
     #[data(same_fn = "PartialEq::eq")]
     pub update: Cell<bool>,
     pub zoom: f64,
@@ -113,7 +114,7 @@ impl AppState {
             is_writing_text: false,
             update: Cell::new(false),
             zoom: 1f64,
-            save: false,
+            save: Cell::new(false),
         }
     }
 }

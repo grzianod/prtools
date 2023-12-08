@@ -237,7 +237,7 @@ impl Widget<AppState> for DrawingWidget {
         if bc.is_width_bounded() && bc.is_height_bounded() {
             bc.max()
         } else {
-            let size = druid::Size::new(ctx.window().get_size().width, ctx.window().get_size().height - 28.0);
+            let size = druid::Size::new(ctx.window().get_size().width, ctx.window().get_size().height - 30.0);
             bc.constrain(size)
         }
     }
@@ -493,39 +493,32 @@ impl Widget<AppState> for DrawingWidget {
             }
         }
 
-        if data.save {
-            
-            let dx = ctx.to_window(Point::new(0f64, 0f64)).x as u32;
-            let dy = ctx.to_window(Point::new(0f64, 0f64)).y as u32;
-            println!("{} {}", dx, dy);
+        if data.save.get() {
             let screens = Screen::all().unwrap();
             let screen = screens.first().unwrap();
-            let x = ctx.window().get_position().x as i32;
-            let y = ctx.window().get_position().y as i32;
-            let width = ctx.window().get_size().width as u32;
-            let height = ctx.window().get_size().height as u32;
-            thread::sleep(Duration::from_millis(300));
-            #[cfg(target_os = "windows")]
-            let title_bar_height = unsafe { GetSystemMetrics(SM_CYCAPTION) } as u32;
-            let image = screen.capture_area(x + dx as i32, y + dy as i32, width, height).unwrap();
-            image.save(data.image_path.as_str()).unwrap();
+            #[cfg(target_os = "windows")] {
+                let dx = ctx.to_window(Point::new(0f64, 0f64)).x as u32;
+                let dy = ctx.to_window(Point::new(0f64, 0f64)).y as u32;
+                let x = ctx.window().get_position().x as i32;
+                let y = ctx.window().get_position().y as i32;
+                let width = ctx.window().get_size().width as u32;
+                let height = ctx.window().get_size().height as u32;
+                let title_bar_height = unsafe { GetSystemMetrics(SM_CYCAPTION) } as u32;
+                #[cfg(not(target_os = "macos"))]
+                thread::sleep(Duration::from_millis(300));
+                let image = screen.capture_area(x + dx as i32, y + dy as i32, width, height).unwrap();
+                image.save(data.image_path.as_str()).unwrap();
+            }
+            #[cfg(target_os = "macos")] {
+                let x = ctx.window().get_position().x;
+                let y = ctx.window().get_position().y;
+                let width = ctx.window().get_size().width;
+                let height = ctx.window().get_size().height;
+                let image = screen.capture_area(x as i32, (y+30.0) as i32, width as u32, (height-30.0) as u32).unwrap();
+                image.save(data.image_path.to_string()).unwrap();
+            }
+
+        data.save.set(false);
         }
     }
 }
-
-/*#[cfg(target_os = "macos")]
-fn draw_with_cgcontext(paint_ctx: &mut druid::PaintCtx) -> CGContext {
-    use core_graphics::context::{CGContextRef, CGContext};
-    use std::os::raw::c_void;
-
-    // Access the raw CGContextRef
-    unsafe {
-        let raw_context = paint_ctx.render_ctx;
-
-        // Perform your drawing operations using Core Graphics here
-       CGContext::from_existing_context_ptr(raw_context as *mut core_graphics::sys::CGContext)
-
-        // Make sure to release the CGContextRef when done
-        // CGContext::release(cg_context); // Usually not necessary, as Rust's ownership system will handle it
-    }
-}*/
