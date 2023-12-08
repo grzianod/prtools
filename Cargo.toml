@@ -11,11 +11,14 @@ tauri-dialog = "0.1.1"
 clap = { version = "4.4.6", features = ["derive"] }
 druid = {version= "0.8.3", features = ["image"]  }
 image = "0.24.7"
-druid-shell = "0.8.3"
 num-traits = "0.2.17"
 kurbo = "0.10.4"
 cargo-bundle = "0.6.0"
 notify-rust = "4.10.0"
+core-graphics = "0.23.1"
+cocoa = "0.25.0"
+objc = "0.2.7"
+druid-shell = "0.8.3"
 
 [package.metadata.bundle]
 name = "Screen Crab Tools"

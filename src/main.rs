@@ -14,7 +14,7 @@ use crate::painter::DrawingWidget;
 
 fn ui_builder() -> impl Widget<AppState> {
     let drawing = Flex::row().with_child(DrawingWidget).padding(0.0);
-    Align::centered(Scroll::new(drawing))
+    Align::centered(drawing)
 }
 
 fn main() -> Result<(), PlatformError> {

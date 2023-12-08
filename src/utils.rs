@@ -1,7 +1,9 @@
+use std::cell::Cell;
 use std::path::Path;
-use druid::{Color, ImageBuf, Monitor, Point, Size};
+use druid::{Affine, Color, ImageBuf, Monitor, Point, Size};
 use druid::{Data, Lens};
 use clap::Parser;
+use druid::piet::CoreGraphicsImage;
 use tauri_dialog::DialogSelection;
 
 /// Annotation Tools
@@ -31,34 +33,43 @@ impl Default for Selection {
 }
 #[derive(PartialEq, Debug, Clone)]
 pub enum Action {
-    Pen(Vec<Point>, Color, f64),
-    Highlighter(Vec<Point>, Color, f64),
-    Rectangle(Point, Point, Color, bool, f64), // Stores rectangle points and color
-    Circle(Point, f64, Color, bool, f64), // Stores circle points and color
-    Ellipse(Point, Point, Color, bool, f64), // Stores ellipse points and color
-    Arrow(Point, Point, Color, f64), // Stores arrow points and color
-    Text(Point, String, Color),  // Stores position, text, and color
+    Pen(Affine, Vec<Point>, Color, f64),
+    Highlighter(Affine, Vec<Point>, Color, f64),
+    Rectangle(Affine, Point, Point, Color, bool, f64), // Stores rectangle points and color
+    Circle(Affine, Point, f64, Color, bool, f64), // Stores circle points and color
+    Ellipse(Affine, Point, Point, Color, bool, f64), // Stores ellipse points and color
+    Arrow(Affine, Point, Point, Color, f64), // Stores arrow points and color
+    Text(Affine, Point, String, Color),  // Stores position, text, and color
 }
 
 
 impl Action {
     pub fn new(selection: &Selection) -> Self {
         match selection {
-            Selection::Pen => Self::Pen(Vec::new(), Color::RED, 2.0),
-            Selection::Highlighter => Self::Highlighter(Vec::new(), Color::RED, 2.0),
-            Selection::Rectangle => Self::Rectangle(Point::ZERO, Point::ZERO, Color::RED, false, 2.0),
-            Selection::Circle => Self::Circle(Point::ZERO, 0.0, Color::RED, false,2.0),
-            Selection::Ellipse => Self::Ellipse(Point::ZERO, Point::ZERO, Color::RED, false, 2.0),
-            Selection::Arrow => Self::Arrow(Point::ZERO, Point::ZERO, Color::RED, 2.0),
-            Selection::Text => Self::Text(Point::ZERO, String::from("test") ,Color::RED), //TBI
+            Selection::Pen => Self::Pen(Affine::IDENTITY, Vec::new(), Color::RED, 2.0),
+            Selection::Highlighter => Self::Highlighter(Affine::IDENTITY,Vec::new(), Color::RED, 2.0),
+            Selection::Rectangle => Self::Rectangle(Affine::IDENTITY,Point::ZERO, Point::ZERO, Color::RED, false, 2.0),
+            Selection::Circle => Self::Circle(Affine::IDENTITY,Point::ZERO, 0.0, Color::RED, false,2.0),
+            Selection::Ellipse => Self::Ellipse(Affine::IDENTITY,Point::ZERO, Point::ZERO, Color::RED, false, 2.0),
+            Selection::Arrow => Self::Arrow(Affine::IDENTITY,Point::ZERO, Point::ZERO, Color::RED, 2.0),
+            Selection::Text => Self::Text(Affine::IDENTITY,Point::ZERO, String::from("test") ,Color::RED), //TBI
         }
     }
 }
 
+#[derive(PartialEq, Debug, Clone, Copy)]
+pub enum Transformation {
+    IDENTITY,
+    FLIP_V,
+    FLIP_H,
+    ROTATE(f64)
+}
 
 
 #[derive(Debug, Clone, Data, Lens)]
 pub struct AppState {
+    #[data(same_fn = "PartialEq::eq")]
+    pub affine: Affine,
     #[data(same_fn = "PartialEq::eq")]
     pub selection: Selection,
     pub image: ImageBuf,
@@ -76,12 +87,17 @@ pub struct AppState {
     pub custom_color: bool,
     pub fill_color: bool,
     pub stroke: f64,
-    pub is_writing_text: bool, // Indicates if the text action is ready to be finalized
+    pub is_writing_text: bool,
+    pub save: bool,
+    #[data(same_fn = "PartialEq::eq")]
+    pub update: Cell<bool>,
+    pub zoom: f64,
 }
 
 impl AppState {
     pub fn new(image: ImageBuf, image_path: String, monitor: Monitor, color: Color) -> Self {
         AppState {
+            affine: Affine::IDENTITY,
             selection: Selection::default(),
             image,
             actions: Vec::<Action>::new(),
@@ -96,6 +112,9 @@ impl AppState {
             fill_color: false,
             stroke: 2.0,
             is_writing_text: false,
+            update: Cell::new(false),
+            zoom: 1f64,
+            save: false,
         }
     }
 }

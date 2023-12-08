@@ -1,11 +1,11 @@
 use std::fs;
 use std::process::exit;
-use druid::{Color, commands, Event, ImageBuf};
-use druid_shell::RawMods;
+use druid::{Affine, Color, commands, Event, ImageBuf};
 use crate::utils;
 use crate::utils::{AppState, Selection};
 use image::{DynamicImage, ImageBuffer, Rgba};
 use notify_rust::Notification;
+use druid::RawMods;
 
 fn convert_to_dynamic_image(image_buf: &ImageBuf) -> DynamicImage {
     // Example conversion, this needs to match the actual format and layout of your ImageBuf
@@ -37,7 +37,8 @@ pub fn create_menu() -> druid::Menu<AppState> {
         .separator()
         .entry(druid::MenuItem::new("Save").hotkey(Some(RawMods::Meta), "S")
             .on_activate( move |ctx, data: &mut AppState, env| {
-
+                data.save = true;
+                data.repaint = true;
             })
         )
         .entry(druid::MenuItem::new("Delete").hotkey(Some(RawMods::Meta), "D")
@@ -288,20 +289,28 @@ pub fn create_menu() -> druid::Menu<AppState> {
             }))
         .entry(druid::MenuItem::new("Rotate").hotkey(Some(RawMods::Meta), "R")
             .on_activate(|ctx, data: &mut AppState, env| {
-                let image = image::open(data.image_path.to_string()).unwrap();
-                data.image = ImageBuf::from_dynamic_image(image.rotate90());
+
                 data.repaint = true;
             }))
         .entry(druid::MenuItem::new("Flip Vertical").hotkey(Some(RawMods::Meta), "L")
             .on_activate(|ctx, data: &mut AppState, env| {
-                let image = image::open(data.image_path.to_string()).unwrap();
-                data.image = ImageBuf::from_dynamic_image(image.flipv());
+                if data.affine == Affine::FLIP_Y {
+                    data.affine = Affine::IDENTITY;
+                }
+                else {
+                    data.affine = Affine::FLIP_Y;
+                }
                 data.repaint = true;
             }))
         .entry(druid::MenuItem::new("Flip Horizontal").hotkey(Some(RawMods::Meta), "I")
             .on_activate(|ctx, data: &mut AppState, env| {
-                let image = image::open(data.image_path.to_string()).unwrap();
-                data.image = ImageBuf::from_dynamic_image(image.fliph());
+                if data.affine == Affine::FLIP_X {
+                    data.affine = Affine::IDENTITY;
+                }
+                else {
+                    data.affine = Affine::FLIP_X;
+                }
+                data.repaint = true;
                 data.repaint = true;
             }));
 
