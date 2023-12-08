@@ -7,20 +7,6 @@ use image::{DynamicImage, ImageBuffer, Rgba};
 use notify_rust::Notification;
 use druid::RawMods;
 
-fn convert_to_dynamic_image(image_buf: &ImageBuf) -> DynamicImage {
-    // Example conversion, this needs to match the actual format and layout of your ImageBuf
-    // This is just a placeholder and might not work directly with your ImageBuf
-    let raw_pixels = image_buf.raw_pixels();
-    let image = ImageBuffer::<Rgba<u8>, Vec<u8>>::from_raw(image_buf.width() as u32, image_buf.height() as u32, raw_pixels.to_vec()).unwrap();
-    DynamicImage::ImageRgba8(image)
-}
-
-// Implement the save function
-fn save_image(image_buf: &ImageBuf, path: &str) -> Result<(), image::ImageError> {
-    let dynamic_image = convert_to_dynamic_image(image_buf);
-    dynamic_image.save(path)
-}
-
 pub fn create_menu() -> druid::Menu<AppState> {
 
     #[cfg(target_os = "macos")]

@@ -1,3 +1,6 @@
+use std::thread;
+use std::time::Duration;
+
 use crate::utils::{AppState, Action, Transformation};
 use druid::{Cursor, Rect, Widget, WidgetExt, WindowDesc, AppLauncher, WindowConfig, Code, TextLayout, ImageBuf, Affine, FontDescriptor, FontFamily};
 use druid::RenderContext;
@@ -6,9 +9,13 @@ use druid::{Data, Lens};
 use druid::kurbo::{Circle, Line, Point, Vec2, Ellipse};
 use druid::piet::{ImageFormat, InterpolationMode};
 use druid::Event;
-use image::GenericImageView;
+use image::{GenericImageView, DynamicImage, ImageBuffer, Rgba};
 use num_traits::cast::FromPrimitive;
 use druid::piet::{Text, TextLayoutBuilder};
+use screenshots::Screen;
+#[cfg(target_os = "windows")]
+use winapi::um::winuser::{GetSystemMetrics, SM_CYCAPTION};
+
 /*use cocoa::appkit::{
     CGFloat, NSApp, NSApplication, NSAutoresizingMaskOptions, NSBackingStoreBuffered, NSColor,
     NSEvent, NSView, NSViewHeightSizable, NSViewWidthSizable, NSWindow, NSWindowStyleMask,
@@ -38,6 +45,19 @@ fn calculate_arrowhead(start: Point, end: Point, arrowhead_length: f64, arrowhea
 struct TextInputState {
     text: String,
 }
+
+
+// use druid::piet::d2d::Bitmap;
+/* 
+fn convert_bitmap_to_dynamic_image(bitmap: Bitmap) -> DynamicImage {
+}
+
+// Implement the save function
+fn save_image(bitmap: Bitmap, path: &str) -> Result<(), image::ImageError> {
+    let dynamic_image = convert_bitmap_to_dynamic_image(bitmap);
+    dynamic_image.save(path)
+}
+*/
 
 pub struct DrawingWidget;
 
@@ -474,10 +494,26 @@ impl Widget<AppState> for DrawingWidget {
         }
         #[cfg(not(target_os = "macos"))]
         if data.save {
-            let width = ctx.size().width;
-            let height = ctx.size().height;
+            
+            let dx = ctx.to_window(Point::new(0f64, 0f64)).x as u32;
+            let dy = ctx.to_window(Point::new(0f64, 0f64)).y as u32;
+            println!("{} {}", dx, dy);
+            /*
             let image = ctx.render_ctx.capture_image_area(Rect::new(0.0, 0.0, width, height)).unwrap();
             //save the image on file at data.image_path
+            save_image(image, data.image_path.as_str()).unwrap();
+            */
+            let screens = Screen::all().unwrap();
+            let screen = screens.first().unwrap();
+            let x = ctx.window().get_position().x as i32;
+            let y = ctx.window().get_position().y as i32;
+            let width = ctx.window().get_size().width as u32;
+            let height = ctx.window().get_size().height as u32;
+            thread::sleep(Duration::from_millis(300));
+            #[cfg(target_os = "windows")]
+            let title_bar_height = unsafe { GetSystemMetrics(SM_CYCAPTION) } as u32;
+            let image = screen.capture_area(x + dx as i32, y + dy as i32, width, height).unwrap();
+            image.save(data.image_path.as_str()).unwrap();
         }
     }
 }

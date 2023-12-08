@@ -16,11 +16,15 @@ kurbo = "0.10.4"
 cargo-bundle = "0.6.0"
 notify-rust = "4.10.0"
 druid-shell = "0.8.3"
+screenshots = "0.8.5"
 
 [target.'cfg(target_os = "macos")'.dependencies]
 core-graphics = "0.23.1"
 cocoa = "0.25.0"
 objc = "0.2.7"
+
+[target.'cfg(target_os = "windows")'.dependencies]
+winapi = { version = "0.3.9", features = ["winuser", "winreg"] }
 
 [package.metadata.bundle]
 name = "Screen Crab Tools"
