@@ -1,40 +1,17 @@
-use std::thread;
-use std::time::Duration;
-
-use crate::utils::{AppState, Action, Transformation, Selection};
-use druid::{Cursor, Rect, Widget, WidgetExt, WindowDesc, AppLauncher, WindowConfig, Code, TextLayout, ImageBuf, Affine, FontDescriptor, FontFamily, PaintCtx};
+use crate::utils::{AppState, Action};
+use druid::{Cursor, Rect, Widget, Code, TextLayout, ImageBuf, Affine, FontDescriptor, FontFamily};
 use druid::RenderContext;
 use druid::{Env, Color};
 use druid::{Data, Lens};
 use druid::kurbo::{Circle, Line, Point, Vec2, Ellipse};
-use druid::piet::{ImageFormat, InterpolationMode, StrokeDash, StrokeStyle};
+use druid::piet::{ImageFormat, InterpolationMode, StrokeStyle};
 use druid::Event;
-use image::{GenericImageView, DynamicImage, ImageBuffer, Rgba};
+use image::{GenericImageView, DynamicImage};
 use num_traits::cast::FromPrimitive;
-use druid::piet::{Text, TextLayoutBuilder};
 use druid::Screen as dScreen;
-use druid::widget::{FillStrat, Image, Scroll};
 use screenshots::Screen;
 #[cfg(target_os = "windows")]
 use winapi::um::winuser::{GetSystemMetrics, SM_CYCAPTION};
-use crate::utils;
-use crate::utils::app_state_derived_lenses::image_path;
-
-/*use cocoa::appkit::{
-    CGFloat, NSApp, NSApplication, NSAutoresizingMaskOptions, NSBackingStoreBuffered, NSColor,
-    NSEvent, NSView, NSViewHeightSizable, NSViewWidthSizable, NSWindow, NSWindowStyleMask,
-};
-use objc::declare::ClassDecl;
-use objc::rc::WeakPtr;
-use objc::runtime::{Class, Object, Protocol, Sel};
-use objc::{class, msg_send, sel, sel_impl};
-use cocoa::foundation::{NSPoint, NSRect, NSSize};
-use core_graphics::context::CGContext;
-use core_graphics::display::CGSize;
-use core_graphics::image::CGImage;
-use core_graphics::sys::CGContextRef;
-use druid_shell::piet;
-use druid::piet::CoreGraphicsContext;*/
 
 fn calculate_arrowhead(start: Point, end: Point, arrowhead_length: f64, arrowhead_width: f64) -> (Point, Point) {
     let direction = (end - start).normalize();
@@ -66,7 +43,7 @@ fn save_image(bitmap: Bitmap, path: &str) -> Result<(), image::ImageError> {
 pub struct DrawingWidget;
 
 impl Widget<AppState> for DrawingWidget {
-    fn event(&mut self, ctx: &mut druid::EventCtx, event: &druid::Event, data: &mut AppState, _env: &Env) {
+    fn event(&mut self, ctx: &mut druid::EventCtx, event: &Event, data: &mut AppState, _env: &Env) {
         // Handle user input events for drawing here
         match event {
             Event::KeyDown(key) => {
@@ -95,7 +72,7 @@ impl Widget<AppState> for DrawingWidget {
                 }
             }
             Event::Zoom(value) => {
-                data.zoom *= (1f64 + value);
+                data.zoom = data.zoom * (1f64 + value);
                 println!("{}", data.zoom);
             }
             Event::MouseDown(e) => {
@@ -127,7 +104,7 @@ impl Widget<AppState> for DrawingWidget {
                         *stroke = data.stroke;
                         *affine = data.affine;
                     }
-                    Action::Circle(ref mut affine, ref mut center, ref mut radius, ref mut color, ref mut fill, ref mut stroke) => {
+                    Action::Circle(ref mut affine, ref mut center, _, ref mut color, ref mut fill, ref mut stroke) => {
                         *center = e.pos;
                         *fill = data.fill_color;
                         *color = data.color;
@@ -149,7 +126,7 @@ impl Widget<AppState> for DrawingWidget {
                         *stroke = data.stroke;
                         *affine = data.affine;
                     }
-                    Action::Text(ref mut affine, ref mut position, ref mut text, ref mut color) => {
+                    Action::Text(ref mut affine, ref mut position, _, ref mut color) => {
                         if data.is_writing_text { return; }
                         *position = e.pos;
                         *color = data.color;
@@ -180,12 +157,12 @@ impl Widget<AppState> for DrawingWidget {
                     if let Some(action) = data.actions.last_mut() {
                         match action {
                             Action::Pen(_, points, _, _) => { points.push(e.pos); }
-                            Action::Highlighter(_, points, color, _) => { points.push(e.pos); }
+                            Action::Highlighter(_, points, _, _) => { points.push(e.pos); }
                             Action::Rectangle(_, _, end_point, _, _, _) => {
                                 *end_point = e.pos;
                             }
                             Action::Circle(_, center, radius, _, _, _) => {
-                                *radius = f64::sqrt(num_traits::pow((center.x - e.pos.x), 2) + num_traits::pow((center.y - e.pos.y), 2));
+                                *radius = f64::sqrt(num_traits::pow(center.x - e.pos.x, 2) + num_traits::pow(center.y - e.pos.y, 2));
                             }
                             Action::Ellipse(_, _, end_point, _, _, _) => {
                                 *end_point = e.pos;
@@ -218,13 +195,13 @@ impl Widget<AppState> for DrawingWidget {
                     *end_point = e.pos;
                 }
                 if let Some(Action::Circle(_, center, radius, _, _, _)) = data.actions.last_mut() {
-                    *radius = f64::sqrt(num_traits::pow((center.x - e.pos.x), 2) + num_traits::pow((center.y - e.pos.y), 2));
+                    *radius = f64::sqrt(num_traits::pow(center.x - e.pos.x, 2) + num_traits::pow(center.y - e.pos.y, 2));
                 }
                 if let Some(Action::Ellipse(_, _, end_point, _, _, _)) = data.actions.last_mut() {
                     *end_point = e.pos;
                 }
                 if let Some(Action::Arrow(_, _, _, _, _)) = data.actions.last_mut() {}
-                if let Some(Action::Text(_, position, text, color)) = data.actions.last_mut() {
+                if let Some(Action::Text(_, position, _, color)) = data.actions.last_mut() {
                     if data.is_writing_text { return; }
                     *position = e.pos;
                     *color = data.color;
@@ -280,22 +257,22 @@ impl Widget<AppState> for DrawingWidget {
 
     fn lifecycle(&mut self, _ctx: &mut druid::LifeCycleCtx, _event: &druid::LifeCycle, _data: &AppState, _env: &Env) {}
 
-    fn update(&mut self, ctx: &mut druid::UpdateCtx, old_data: &AppState, data: &AppState, _env: &Env) {
+    fn update(&mut self, ctx: &mut druid::UpdateCtx, _old_data: &AppState, data: &AppState, _env: &Env) {
         ctx.request_layout();
         if data.repaint {
             ctx.request_paint();
         }
     }
 
-    fn layout(&mut self, ctx: &mut druid::LayoutCtx, bc: &druid::BoxConstraints, data: &AppState, _env: &Env) -> druid::Size {
+    fn layout(&mut self, ctx: &mut druid::LayoutCtx, _bc: &druid::BoxConstraints, data: &AppState, _env: &Env) -> druid::Size {
         let monitor = dScreen::get_monitors().first().unwrap().clone();
         let monitor_width = monitor.virtual_work_rect().width();
-        let mut image_width = data.image.width() as f64;
-        let mut image_height = data.image.height() as f64;
+        let image_width = data.image.width() as f64;
+        let image_height = data.image.height() as f64;
 
         data.scale_factor.set( image_width / monitor_width + 0.4f64);
-        let mut window_width = image_width / data.scale_factor.get();
-        let mut window_height = ((image_height * window_width)/image_width);
+        let window_width = image_width / data.scale_factor.get();
+        let window_height = (image_height * window_width)/image_width;
 
         ctx.window().set_size((window_width, window_height + 28.0));
         druid::Size::new(window_width, window_height)
@@ -432,7 +409,7 @@ impl Widget<AppState> for DrawingWidget {
                         });
                         }
                 }
-                Action::Circle(affine, center, radius, color, fill, stroke) => {
+                Action::Circle(affine, center, radius, _, fill, stroke) => {
                     if *fill {
                         ctx.with_save(|ctx| {
                             let current_affine = data.affine * *affine;
@@ -579,5 +556,5 @@ impl Widget<AppState> for DrawingWidget {
 fn capture_image_area(rect: Rect) -> DynamicImage {
     let screens = Screen::all().unwrap();
     let screen = screens.first().unwrap();
-    image::DynamicImage::ImageRgba8(screen.capture_area(rect.x0 as i32, rect.y0 as i32, rect.x1 as u32, rect.y1 as u32).unwrap())
+    DynamicImage::ImageRgba8(screen.capture_area(rect.x0 as i32, rect.y0 as i32, rect.x1 as u32, rect.y1 as u32).unwrap())
 }

@@ -6,9 +6,8 @@ mod menu;
 use std::fs;
 use std::process::{exit};
 use druid::widget::{Align, Flex, Scroll};
-use druid::{AppLauncher, Color, ImageBuf, PlatformError, Screen, Widget, WidgetExt, WindowDesc};
+use druid::{AppLauncher, Color, PlatformError, Screen, Widget, WidgetExt, WindowDesc};
 use clap::Parser;
-use druid_shell::WindowState;
 use crate::utils::{AppState};
 use crate::painter::DrawingWidget;
 
@@ -34,11 +33,10 @@ fn main() -> Result<(), PlatformError> {
     let image = image::open(arg.path.to_string()).unwrap();
 
     let monitor_width = monitor.virtual_work_rect().width();
-    let monitor_height = monitor.virtual_work_rect().height();
     let image_width = image.width() as f64;
     let image_height = image.height() as f64;
 
-    let mut initial_state = AppState::new(
+    let initial_state = AppState::new(
         image,
         1f64,
         arg.path.to_string(),
@@ -47,14 +45,14 @@ fn main() -> Result<(), PlatformError> {
     );
 
     initial_state.scale_factor.set( image_width / monitor_width + 0.5f64);
-    let mut window_width = image_width / initial_state.scale_factor.get();
-    let mut window_height = ((image_height * window_width)/image_width);
+    let window_width = image_width / initial_state.scale_factor.get();
+    let window_height = (image_height * window_width)/image_width;
 
 
     let main_window = WindowDesc::new(ui_builder())
         .title(format!("Screen Crab Tools [{}]", arg.path.to_string()))
         .window_size((window_width, window_height))
-        .menu(|id, data, env| {
+        .menu(|_, _, _| {
             menu::create_menu()
         });
 
@@ -62,10 +60,10 @@ fn main() -> Result<(), PlatformError> {
         .log_to_console()
         .configure_env(move |env, _| {
             env.set(druid::theme::WINDOW_BACKGROUND_COLOR, Color::TRANSPARENT);
-            env.set(druid::theme::BUTTON_DARK, druid::Color::WHITE);
+            env.set(druid::theme::BUTTON_DARK, Color::WHITE);
             env.set(druid::theme::SCROLLBAR_MAX_OPACITY, 0);
-            env.set(druid::theme::BUTTON_LIGHT, druid::Color::WHITE);
-            env.set(druid::theme::TEXT_COLOR, druid::Color::BLACK);
+            env.set(druid::theme::BUTTON_LIGHT, Color::WHITE);
+            env.set(druid::theme::TEXT_COLOR, Color::BLACK);
         })
         .launch(initial_state)
 }

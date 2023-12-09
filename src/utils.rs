@@ -1,12 +1,11 @@
 use std::cell::Cell;
 use std::path::Path;
-use druid::{Affine, Color, ImageBuf, Monitor, Point, Size};
+use druid::{Affine, Color, ImageBuf, Monitor, Point};
 use druid::{Data, Lens};
 use clap::Parser;
-use druid::kurbo::Arc;
 use image::DynamicImage;
-use druid::piet::{Piet, PietImage};
-use crate::utils::app_state_derived_lenses::scale_factor;
+
+
 
 /// Annotation Tools
 #[derive(Parser, Debug)]
@@ -60,14 +59,6 @@ impl Action {
             Selection::Crop => Self::Crop(DynamicImage::default(), Point::ZERO, Point::ZERO),
         }
     }
-}
-
-#[derive(PartialEq, Debug, Clone, Copy)]
-pub enum Transformation {
-    IDENTITY,
-    FLIP_V,
-    FLIP_H,
-    ROTATE(f64)
 }
 
 #[derive(Debug, Clone, Data, Lens)]
