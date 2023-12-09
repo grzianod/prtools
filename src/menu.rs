@@ -1,6 +1,6 @@
 use std::fs;
 use std::process::exit;
-use druid::{Affine, Color, commands, Env, Point};
+use druid::{Affine, Color, commands, Env};
 use crate::utils::{Action, AppState, Selection};
 use druid::RawMods;
 
@@ -22,14 +22,6 @@ pub fn create_menu() -> druid::Menu<AppState> {
             .on_activate( move |_, data: &mut AppState, _| {
                 data.save.set(true);
                 data.repaint = true;
-            })
-            .enabled_if(|data: &AppState, _| {
-                let mut c = 0;
-                for a in &data.affine {
-                    if a == &Affine::rotate_about(std::f64::consts::FRAC_PI_2, data.center.get()) { c += 1; }
-                    if a == &Affine::rotate_about(-std::f64::consts::FRAC_PI_2, data.center.get()) { c += 1; }
-                }
-                c%2 == 0
             })
         )
         .entry(druid::MenuItem::new("Delete").hotkey(Some(RawMods::Meta), "D")
@@ -238,20 +230,119 @@ pub fn create_menu() -> druid::Menu<AppState> {
             )
         )
         .entry(druid::Menu::new(druid::LocalizedString::new("Font Size"))
-            .entry(druid::MenuItem::new("Normal")
-                .on_activate(|_, _: &mut AppState, _| {
-
+            .enabled_if(|data: &AppState, _| {
+                data.selection == Selection::Text
+            })
+            .entry(druid::MenuItem::new("20 pt")
+                .on_activate(|_, data: &mut AppState, _| {
+                    data.font_size = 20.0
                 })
-                .selected_if(|_: &AppState, _| {
-                    false
+                .selected_if(|data: &AppState, _| {
+                    data.font_size == 20.0
                 })
             )
-            .entry(druid::MenuItem::new("Large")
-                .on_activate(|_, _: &mut AppState, _| {
-
+            .entry(druid::MenuItem::new("24 pt")
+                .on_activate(|_, data: &mut AppState, _| {
+                    data.font_size = 24.0
                 })
-                .selected_if(|_: &AppState, _| {
-                        false
+                .selected_if(|data: &AppState, _| {
+                    data.font_size == 24.0
+                })
+            )
+            .entry(druid::MenuItem::new("28 pt")
+                .on_activate(|_, data: &mut AppState, _| {
+                    data.font_size = 28.0
+                })
+                .selected_if(|data: &AppState, _| {
+                    data.font_size == 28.0
+                })
+            )
+            .entry(druid::MenuItem::new("32 pt")
+                .on_activate(|_, data: &mut AppState, _| {
+                    data.font_size = 32.0
+                })
+                .selected_if(|data: &AppState, _| {
+                    data.font_size == 32.0
+                })
+            )
+            .entry(druid::MenuItem::new("36 pt")
+                .on_activate(|_, data: &mut AppState, _| {
+                    data.font_size = 36.0
+                })
+                .selected_if(|data: &AppState, _| {
+                    data.font_size == 36.0
+                })
+            )
+            .entry(druid::MenuItem::new("40 pt")
+                .on_activate(|_, data: &mut AppState, _| {
+                    data.font_size = 40.0
+                })
+                .selected_if(|data: &AppState, _| {
+                    data.font_size == 40.0
+                })
+            )
+            .entry(druid::MenuItem::new("44 pt")
+                .on_activate(|_, data: &mut AppState, _| {
+                    data.font_size = 44.0
+                })
+                .selected_if(|data: &AppState, _| {
+                    data.font_size == 44.0
+                })
+            )
+            .entry(druid::MenuItem::new("48 pt")
+                .on_activate(|_, data: &mut AppState, _| {
+                    data.font_size = 48.0
+                })
+                .selected_if(|data: &AppState, _| {
+                    data.font_size == 48.0
+                })
+            )
+            .entry(druid::MenuItem::new("52 pt")
+                .on_activate(|_, data: &mut AppState, _| {
+                    data.font_size = 52.0
+                })
+                .selected_if(|data: &AppState, _| {
+                    data.font_size == 52.0
+                })
+            )
+            .entry(druid::MenuItem::new("56 pt")
+                .on_activate(|_, data: &mut AppState, _| {
+                    data.font_size = 56.0
+                })
+                .selected_if(|data: &AppState, _| {
+                    data.font_size == 56.0
+                })
+            )
+            .entry(druid::MenuItem::new("60 pt")
+                .on_activate(|_, data: &mut AppState, _| {
+                    data.font_size = 60.0
+                })
+                .selected_if(|data: &AppState, _| {
+                    data.font_size == 60.0
+                })
+            )
+            .entry(druid::MenuItem::new("64 pt")
+                .on_activate(|_, data: &mut AppState, _| {
+                    data.font_size = 64.0
+                })
+                .selected_if(|data: &AppState, _| {
+                    data.font_size == 64.0
+                })
+            )
+            .entry(druid::MenuItem::new("68 pt")
+                .on_activate(|_, data: &mut AppState, _| {
+                    data.font_size = 68.0
+                })
+                .selected_if(|data: &AppState, _| {
+                    data.font_size == 68.0
+                })
+            )
+            .entry(druid::MenuItem::new("72 pt")
+                .on_activate(|_, data: &mut AppState, _| {
+                    data.font_size = 72.0
+                })
+                .selected_if(|data: &AppState, _| {
+                    data.font_size == 72.0
                 })
             )
         );
@@ -266,7 +357,7 @@ pub fn create_menu() -> druid::Menu<AppState> {
                     Action::Rectangle(_, _, _, _, _, _) => { format!("Undo Rectangle") }
                     Action::Circle(_, _, _, _, _, _) => { format!("Undo Circle") }
                     Action::Ellipse(_, _, _, _, _, _) => { format!("Undo Ellipse") }
-                    Action::Text(_, _, _, _) => { format!("Undo Text") }
+                    Action::Text(_, _, _, _, _) => { format!("Undo Text") }
                     _ => { "Undo".to_string() }
                 }
             } else { "Undo".to_string() }
@@ -290,7 +381,7 @@ pub fn create_menu() -> druid::Menu<AppState> {
                     Action::Rectangle(_, _, _, _, _, _) => { format!("Redo Rectangle") }
                     Action::Circle(_, _, _, _, _, _) => { format!("Redo Circle") }
                     Action::Ellipse(_, _, _, _, _, _) => { format!("Redo Ellipse") }
-                    Action::Text(_, _, _, _) => { format!("Redo Text") }
+                    Action::Text(_, _, _, _, _) => { format!("Redo Text") }
                     _ => { "Undo".to_string() }
                 }
             } else { "Redo".to_string() }
@@ -312,18 +403,19 @@ pub fn create_menu() -> druid::Menu<AppState> {
                 data.crop.set(true);
                 data.repaint = true;
             }))
-        .entry(druid::MenuItem::new("Rotate Clockwise").hotkey(Some(RawMods::Meta), "T")
-            .on_activate(|_, data: &mut AppState, _| {
-                data.affine.push(Affine::rotate_about(std::f64::consts::FRAC_PI_2, data.center.get()));
-                println!("{:?}", Affine::rotate_about(std::f64::consts::FRAC_PI_2, Point::new(data.image.width() as f64/2f64, data.image.height() as f64/2f64)));
-                data.repaint = true;
-            }))
-        .entry(druid::MenuItem::new("Rotate Counterclockwise").hotkey(Some(RawMods::Meta), "W")
-            .on_activate(|_, data: &mut AppState, _| {
+        .entry(druid::MenuItem::new("Rotate Left ↺").hotkey(Some(RawMods::Meta), "W")
+            .on_activate(|_, data: &mut AppState, _|{
                 data.affine.push(Affine::rotate_about(-std::f64::consts::FRAC_PI_2, data.center.get()));
                 data.repaint = true;
+                data.rotated = !data.rotated;
             }))
-        .entry(druid::MenuItem::new("Flip Vertical").hotkey(Some(RawMods::Meta), "X")
+        .entry(druid::MenuItem::new("Rotate Right ↻").hotkey(Some(RawMods::Meta), "T")
+            .on_activate(|_, data: &mut AppState, _| {
+                data.affine.push(Affine::rotate_about(std::f64::consts::FRAC_PI_2, data.center.get()));
+                data.repaint = true;
+                data.rotated = !data.rotated;
+            }))
+        .entry(druid::MenuItem::new("Flip Vertical ").hotkey(Some(RawMods::Meta), "X")
             .on_activate(|_, data: &mut AppState, _| {
                 data.affine.push(Affine::FLIP_Y);
                 data.repaint = true;
