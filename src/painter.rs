@@ -4,12 +4,11 @@ use druid::RenderContext;
 use druid::{Env, Color};
 use druid::{Data, Lens};
 use druid::kurbo::{Circle, Line, Point, Vec2, Ellipse};
-use druid::piet::{ImageFormat, InterpolationMode, PietTextLayout, StrokeStyle};
+use druid::piet::{ImageFormat, InterpolationMode, StrokeStyle};
 use druid::Event;
 use image::{GenericImageView, DynamicImage};
 use num_traits::cast::FromPrimitive;
 use druid::Screen as dScreen;
-use druid::widget::TextBox;
 use screenshots::Screen;
 #[cfg(target_os = "windows")]
 use winapi::um::winuser::{GetSystemMetrics, SM_CYCAPTION};

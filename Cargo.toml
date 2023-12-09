@@ -13,7 +13,6 @@ druid = {version= "0.8.3", features = ["image"]  }
 image = "0.24.7"
 num-traits = "0.2.17"
 kurbo = "0.10.4"
-cargo-bundle = "0.6.0"
 notify-rust = "4.10.0"
 druid-shell = "0.8.3"
 screenshots = "0.8.5"
