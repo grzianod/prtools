@@ -3,8 +3,10 @@ use std::path::Path;
 use druid::{Affine, Color, ImageBuf, Monitor, Point, Size};
 use druid::{Data, Lens};
 use clap::Parser;
+use druid::kurbo::Arc;
 use image::DynamicImage;
-use tauri_dialog::DialogSelection;
+use druid::piet::{Piet, PietImage};
+use crate::utils::app_state_derived_lenses::scale_factor;
 
 /// Annotation Tools
 #[derive(Parser, Debug)]
@@ -68,15 +70,15 @@ pub enum Transformation {
     ROTATE(f64)
 }
 
-
 #[derive(Debug, Clone, Data, Lens)]
 pub struct AppState {
     #[data(same_fn = "PartialEq::eq")]
     pub affine: Affine,
     #[data(same_fn = "PartialEq::eq")]
-    pub selection: Selection,
+    pub scale_factor: Cell<f64>,
     #[data(same_fn = "PartialEq::eq")]
-    pub image: DynamicImage,
+    pub selection: Selection,
+    pub image: ImageBuf,
     #[data(same_fn = "PartialEq::eq")]
     pub actions: Vec<Action>,
     #[data(same_fn = "PartialEq::eq")]
@@ -102,11 +104,12 @@ pub struct AppState {
 }
 
 impl AppState {
-    pub fn new(image: DynamicImage, image_path: String, monitor: Monitor, color: Color) -> Self {
+    pub fn new(image: DynamicImage, scale: f64, image_path: String, monitor: Monitor, color: Color) -> Self {
         AppState {
+            scale_factor: Cell::new(scale),
             affine: Affine::IDENTITY,
             selection: Selection::default(),
-            image,
+            image: ImageBuf::from_dynamic_image(image),
             actions: Vec::<Action>::new(),
             redo_actions: Vec::<Action>::new(),
             is_drawing: false,
@@ -137,13 +140,4 @@ pub fn dialog_file_not_found(path: String) {
         .show();
 }
 
-pub fn dialog_delete_file(path: String) -> bool {
-    tauri_dialog::DialogBuilder::new()
-        .title(&format!("Are you sure you want to delete {}", path ))
-        .message(&format!("Tools will be closed and this item will be moved to Bin."))
-        .style(tauri_dialog::DialogStyle::Question)
-        .buttons(tauri_dialog::DialogButtons::YesNo)
-        .build()
-        .show()
-        .eq(&DialogSelection::Yes)
-}
+

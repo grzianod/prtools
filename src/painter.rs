@@ -7,14 +7,18 @@ use druid::RenderContext;
 use druid::{Env, Color};
 use druid::{Data, Lens};
 use druid::kurbo::{Circle, Line, Point, Vec2, Ellipse};
-use druid::piet::{ImageFormat, InterpolationMode};
+use druid::piet::{ImageFormat, InterpolationMode, StrokeDash, StrokeStyle};
 use druid::Event;
 use image::{GenericImageView, DynamicImage, ImageBuffer, Rgba};
 use num_traits::cast::FromPrimitive;
 use druid::piet::{Text, TextLayoutBuilder};
+use druid::Screen as dScreen;
+use druid::widget::{FillStrat, Image, Scroll};
 use screenshots::Screen;
 #[cfg(target_os = "windows")]
 use winapi::um::winuser::{GetSystemMetrics, SM_CYCAPTION};
+use crate::utils;
+use crate::utils::app_state_derived_lenses::image_path;
 
 /*use cocoa::appkit::{
     CGFloat, NSApp, NSApplication, NSAutoresizingMaskOptions, NSBackingStoreBuffered, NSColor,
@@ -155,9 +159,9 @@ impl Widget<AppState> for DrawingWidget {
                     }
                     Action::Crop(ref mut prev_image, ref mut start_point, ref mut end_point) => {
                         let x = ctx.window().get_position().x;
-                        let y = ctx.window().get_position().y + 30.0;
-                        let width = ctx.window().get_size().width;
-                        let height = ctx.window().get_size().height - 30.0;
+                        let y = ctx.window().get_position().y + 28.0;
+                        let width = ctx.size().width;
+                        let height = ctx.size().height;
                         *prev_image = capture_image_area(Rect::new(x, y, width, height));
                         *start_point = e.pos;
                         *end_point = e.pos;
@@ -244,9 +248,21 @@ impl Widget<AppState> for DrawingWidget {
                         image.save(data.image_path.as_str()).unwrap();
                     }
                     #[cfg(target_os = "macos")] {
-                        let x = ctx.window().get_position().x;
-                        let y = ctx.window().get_position().y + 30.0;
-                        data.image =  prev_image.crop((x+start_point.x) as u32, (y+start_point.y) as u32, (x+end_point.x) as u32, (y+end_point.y) as u32);
+                            let mut x = start_point.x;
+                            let mut y = start_point.y;
+                            let mut width = end_point.x - x;
+                            let mut height = end_point.y - y;
+
+
+                            x = (x * data.image.width() as f64) / ctx.window().get_size().width;
+                            y = (y * data.image.height() as f64) / ctx.window().get_size().height;
+                            width = (width * data.image.width() as f64) / ctx.window().get_size().width;
+                            height = (height * data.image.height() as f64) / ctx.window().get_size().height;
+
+
+                            data.image = ImageBuf::from_dynamic_image(prev_image.crop(x.floor() as u32, y.floor() as u32, width.ceil() as u32, height.ceil() as u32));
+                            data.actions.clear();
+                            data.redo_actions.clear();
                     }
 
                     #[cfg(target_os="linux")] {
@@ -264,20 +280,25 @@ impl Widget<AppState> for DrawingWidget {
 
     fn lifecycle(&mut self, _ctx: &mut druid::LifeCycleCtx, _event: &druid::LifeCycle, _data: &AppState, _env: &Env) {}
 
-    fn update(&mut self, ctx: &mut druid::UpdateCtx, _old_data: &AppState, data: &AppState, _env: &Env) {
+    fn update(&mut self, ctx: &mut druid::UpdateCtx, old_data: &AppState, data: &AppState, _env: &Env) {
+        ctx.request_layout();
         if data.repaint {
             ctx.request_paint();
         }
     }
 
     fn layout(&mut self, ctx: &mut druid::LayoutCtx, bc: &druid::BoxConstraints, data: &AppState, _env: &Env) -> druid::Size {
-        // Return the size of the drawing area
-        if bc.is_width_bounded() && bc.is_height_bounded() {
-            bc.max()
-        } else {
-            let size = druid::Size::new(ctx.window().get_size().width, ctx.window().get_size().height - 30.0);
-            bc.constrain(size)
-        }
+        let monitor = dScreen::get_monitors().first().unwrap().clone();
+        let monitor_width = monitor.virtual_work_rect().width();
+        let mut image_width = data.image.width() as f64;
+        let mut image_height = data.image.height() as f64;
+
+        data.scale_factor.set( image_width / monitor_width + 0.4f64);
+        let mut window_width = image_width / data.scale_factor.get();
+        let mut window_height = ((image_height * window_width)/image_width);
+
+        ctx.window().set_size((window_width, window_height + 28.0));
+        druid::Size::new(window_width, window_height)
     }
 
     fn paint(&mut self, ctx: &mut druid::PaintCtx, data: &AppState, env: &Env) {
@@ -292,8 +313,7 @@ impl Widget<AppState> for DrawingWidget {
             if data.affine == Affine::FLIP_X {
                 ctx.transform(Affine::translate((-width, 0.0)));
             }
-            let img = ImageBuf::from_dynamic_image(data.image.clone());
-            let image = ctx.render_ctx.make_image(img.width(), img.height(), img.raw_pixels(), ImageFormat::RgbaSeparate).unwrap();
+            let image = ctx.render_ctx.make_image(data.image.width(), data.image.height(), data.image.raw_pixels(), ImageFormat::RgbaSeparate).unwrap();
             ctx.render_ctx.draw_image(&image, Rect::new(0f64, 0f64, width, height), InterpolationMode::Bilinear);
         });
 
@@ -528,7 +548,7 @@ impl Widget<AppState> for DrawingWidget {
                 }
                 Action::Crop(_, start_point, end_point) => {
                     if data.crop.get() {
-                        let background_color = Color::rgba(1.0, 1.0, 1.0, 0.1); // Blue with 50% transparency
+                        let background_color = Color::rgba(1.0, 1.0, 1.0, 0.05);
                         ctx.fill(Rect::from_points(*start_point, *end_point), &background_color);
 
                         // Set the border color
@@ -537,7 +557,8 @@ impl Widget<AppState> for DrawingWidget {
                         // Draw the border
                         let border_width = 2.0;
                         let border_rect = Rect::from_points(*start_point, *end_point).inset(-border_width / 2.0);
-                        ctx.stroke(border_rect, &border_color, border_width);
+                        let stroke_style = StrokeStyle::new().dash_pattern(&[2.0]);
+                        ctx.stroke_styled(border_rect, &border_color, border_width, &stroke_style);
                     }
                 }
             }
@@ -545,9 +566,9 @@ impl Widget<AppState> for DrawingWidget {
 
         if data.save.get() {
             let x = ctx.window().get_position().x;
-            let y = ctx.window().get_position().y + 30.0;
+            let y = ctx.window().get_position().y + 28.0;
             let width = ctx.window().get_size().width;
-            let height = ctx.window().get_size().height - 30.0;
+            let height = ctx.window().get_size().height - 28.0;
             let image = capture_image_area(Rect::new(x,y,width, height));
             image.save(data.image_path.to_string()).unwrap();
             data.save.set(false);

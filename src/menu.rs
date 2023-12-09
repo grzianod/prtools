@@ -29,10 +29,10 @@ pub fn create_menu() -> druid::Menu<AppState> {
         )
         .entry(druid::MenuItem::new("Delete").hotkey(Some(RawMods::Meta), "D")
             .on_activate(move |ctx, data: &mut AppState, env| {
-                if utils::dialog_delete_file(data.image_path.to_string()) {
+
                     fs::remove_file(data.image_path.to_string()).unwrap();
                     exit(0);
-                }
+
             })
         );
 

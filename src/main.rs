@@ -8,6 +8,7 @@ use std::process::{exit};
 use druid::widget::{Align, Flex, Scroll};
 use druid::{AppLauncher, Color, ImageBuf, PlatformError, Screen, Widget, WidgetExt, WindowDesc};
 use clap::Parser;
+use druid_shell::WindowState;
 use crate::utils::{AppState};
 use crate::painter::DrawingWidget;
 
@@ -32,17 +33,23 @@ fn main() -> Result<(), PlatformError> {
 
     let image = image::open(arg.path.to_string()).unwrap();
 
-    let image_width = image.width();
-    let image_height = image.height();
+    let monitor_width = monitor.virtual_work_rect().width();
+    let monitor_height = monitor.virtual_work_rect().height();
+    let image_width = image.width() as f64;
+    let image_height = image.height() as f64;
 
-    let mut window_width = image_width as f64 * 4f64/10f64;
-    let mut window_height = ((image_height as f64 * window_width)/image_width as f64);
+    let mut initial_state = AppState::new(
+        image,
+        1f64,
+        arg.path.to_string(),
+        monitor,
+        Color::RED
+    );
 
-    //if image is too tiny, set a fixed window size
-    if window_width < monitor.virtual_work_rect().width()/3f64 || window_height < monitor.virtual_work_rect().width()/3f64 {
-        window_width = monitor.virtual_work_rect().width()/3f64;
-        window_height = monitor.virtual_work_rect().width()/3f64;
-    }
+    initial_state.scale_factor.set( image_width / monitor_width + 0.5f64);
+    let mut window_width = image_width / initial_state.scale_factor.get();
+    let mut window_height = ((image_height * window_width)/image_width);
+
 
     let main_window = WindowDesc::new(ui_builder())
         .title(format!("Screen Crab Tools [{}]", arg.path.to_string()))
@@ -51,13 +58,6 @@ fn main() -> Result<(), PlatformError> {
             menu::create_menu()
         });
 
-
-    let initial_state = AppState::new(
-        image,
-        arg.path.to_string(),
-        monitor,
-        Color::RED
-    );
     AppLauncher::with_window(main_window)
         .log_to_console()
         .configure_env(move |env, _| {
