@@ -405,13 +405,13 @@ pub fn create_menu() -> druid::Menu<AppState> {
             }))
         .entry(druid::MenuItem::new("Rotate Left ↺").hotkey(Some(RawMods::Meta), "W")
             .on_activate(|_, data: &mut AppState, _|{
-                data.affine.push(Affine::rotate_about(-std::f64::consts::FRAC_PI_2, data.center.get()));
+                data.affine.push(Affine::rotate(-std::f64::consts::FRAC_PI_2));
                 data.repaint = true;
                 data.rotated = !data.rotated;
             }))
         .entry(druid::MenuItem::new("Rotate Right ↻").hotkey(Some(RawMods::Meta), "T")
             .on_activate(|_, data: &mut AppState, _| {
-                data.affine.push(Affine::rotate_about(std::f64::consts::FRAC_PI_2, data.center.get()));
+                data.affine.push(Affine::rotate(std::f64::consts::FRAC_PI_2));
                 data.repaint = true;
                 data.rotated = !data.rotated;
             }))

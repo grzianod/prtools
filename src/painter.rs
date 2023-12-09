@@ -310,23 +310,39 @@ impl Widget<AppState> for DrawingWidget {
         }
 
     fn paint(&mut self, ctx: &mut druid::PaintCtx, data: &AppState, env: &Env) {
-        let width = ctx.size().width;
-        let height = ctx.size().height;
+
+        let width;
+        let height;
+
+        if data.rotated {
+            width = ctx.size().height;
+            height = ctx.size().width;
+            data.center.set(Point::new(width/2f64, height/2f64) );
+        }
+        else {
+            width = ctx.size().width;
+            height = ctx.size().height;
+            data.center.set(Point::new(width/2f64, height/2f64) );
+        }
 
         ctx.with_save(|ctx| {
             for a in &data.affine {
                 ctx.render_ctx.transform(*a);
                 if a == &Affine::FLIP_Y { ctx.render_ctx.transform(Affine::translate((0.0, -height))); }
                 if a == &Affine::FLIP_X { ctx.render_ctx.transform(Affine::translate((-width, 0.0))); }
-            }
+                if data.rotated {
+                    if a == &Affine::rotate(std::f64::consts::FRAC_PI_2) { ctx.render_ctx.transform(Affine::translate((0.0, -height))); }
+                    if a == &Affine::rotate(-std::f64::consts::FRAC_PI_2) { ctx.render_ctx.transform(Affine::translate((-width, 0.0))); }
+                }
+                else {
+                    if a == &Affine::rotate(std::f64::consts::FRAC_PI_2) { ctx.render_ctx.transform(Affine::translate((-height, 0.0))); }
+                    if a == &Affine::rotate(-std::f64::consts::FRAC_PI_2) { ctx.render_ctx.transform(Affine::translate((0.0, -width))); }
+
+                }
+                }
             let image = ctx.render_ctx.make_image(data.image.width(), data.image.height(), data.image.raw_pixels(), ImageFormat::RgbaSeparate).unwrap();
             ctx.render_ctx.draw_image(&image, Rect::new(0f64, 0f64, width, height), InterpolationMode::Bilinear);
         });
-
-        let width = ctx.size().width;
-        let height = ctx.size().height;
-
-
 
         for action in &data.actions {
             match action {
