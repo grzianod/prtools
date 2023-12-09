@@ -264,7 +264,7 @@ pub fn create_menu() -> druid::Menu<AppState> {
                     Action::Circle(_, _, _, _, _, _) => { return format!("Undo Circle"); }
                     Action::Ellipse(_, _, _, _, _, _) => { return format!("Undo Ellipse"); }
                     Action::Text(_, _, _, _) => { return format!("Undo Text"); }
-                    Action::Crop(_, _, _) => { return format!("Undo Crop"); }
+                    _ => { return "Undo".to_string(); }
                 }
             }
             else { return "Undo".to_string(); }
@@ -289,7 +289,7 @@ pub fn create_menu() -> druid::Menu<AppState> {
                     Action::Circle(_, _, _, _, _, _) => { return format!("Redo Circle"); }
                     Action::Ellipse(_, _, _, _, _, _) => { return format!("Redo Ellipse"); }
                     Action::Text(_, _, _, _) => { return format!("Redo Text"); }
-                    Action::Crop(_, _, _) => { return format!("Redo Crop"); }
+                    _ => { return "Redo".to_string(); }
                 }
             }
             else { return "Redo".to_string(); }
