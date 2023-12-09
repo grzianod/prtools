@@ -45,7 +45,6 @@ pub enum Action {
     Crop(DynamicImage, Point, Point),
 }
 
-
 impl Action {
     pub fn new(selection: &Selection) -> Self {
         match selection {

@@ -47,7 +47,6 @@ impl Widget<AppState> for DrawingWidget {
         // Handle user input events for drawing here
         match event {
             Event::KeyDown(key) => {
-                println!("here");
                 if data.is_writing_text {
                     if key.code.eq(&Code::Enter) {
                         data.is_writing_text = false;
@@ -136,7 +135,7 @@ impl Widget<AppState> for DrawingWidget {
                     }
                     Action::Crop(ref mut prev_image, ref mut start_point, ref mut end_point) => {
                         let x = ctx.window().get_position().x;
-                        let y = ctx.window().get_position().y + 28.0;
+                        let y = ctx.window().get_position().y + 24.0;
                         let width = ctx.size().width;
                         let height = ctx.size().height;
                         *prev_image = capture_image_area(Rect::new(x, y, width, height));
@@ -170,7 +169,7 @@ impl Widget<AppState> for DrawingWidget {
                             Action::Arrow(_, _, end_point, _, _) => {
                                 *end_point = e.pos;
                             }
-                            Action::Crop(_, _, end_point) => {
+                            Action::Crop(_, start_point, end_point) => {
                                 *end_point = e.pos;
                             }
                             _ => {}
@@ -210,7 +209,6 @@ impl Widget<AppState> for DrawingWidget {
                 }
                 if let Some(Action::Crop(prev_image, start_point, end_point)) = data.actions.last_mut() {
                     *end_point = e.pos;
-                    data.crop.set(false);
                     #[cfg(target_os = "windows")] {
                         let dx = ctx.to_window(Point::new(0f64, 0f64)).x as u32;
                         let dy = ctx.to_window(Point::new(0f64, 0f64)).y as u32;
@@ -228,14 +226,12 @@ impl Widget<AppState> for DrawingWidget {
                             let mut x = start_point.x;
                             let mut y = start_point.y;
                             let mut width = end_point.x - x;
-                            let mut height = end_point.y - y;
+                            let mut height = end_point.y - y + 24.0;
 
-
-                            x = (x * data.image.width() as f64) / ctx.window().get_size().width;
-                            y = (y * data.image.height() as f64) / ctx.window().get_size().height;
-                            width = (width * data.image.width() as f64) / ctx.window().get_size().width;
-                            height = (height * data.image.height() as f64) / ctx.window().get_size().height;
-
+                            x = (x * prev_image.width() as f64) / ctx.window().get_size().width;
+                            y = (y * prev_image.height() as f64) / ctx.window().get_size().height;
+                            width = (width * prev_image.width() as f64) / ctx.window().get_size().width;
+                            height = (height * prev_image.height() as f64) / ctx.window().get_size().height;
 
                             data.image = ImageBuf::from_dynamic_image(prev_image.crop(x.floor() as u32, y.floor() as u32, width.ceil() as u32, height.ceil() as u32));
                             data.actions.clear();
@@ -245,6 +241,7 @@ impl Widget<AppState> for DrawingWidget {
                     #[cfg(target_os="linux")] {
 
                     }
+                    data.crop.set(false);
                 }
                 data.is_drawing = false;
                 data.update.set(true);
@@ -270,11 +267,11 @@ impl Widget<AppState> for DrawingWidget {
         let image_width = data.image.width() as f64;
         let image_height = data.image.height() as f64;
 
-        data.scale_factor.set( image_width / monitor_width + 0.4f64);
+        data.scale_factor.set( image_width / monitor_width + 0.5f64);
         let window_width = image_width / data.scale_factor.get();
         let window_height = (image_height * window_width)/image_width;
 
-        ctx.window().set_size((window_width, window_height + 28.0));
+        ctx.window().set_size((window_width, window_height + 24.0));
         druid::Size::new(window_width, window_height)
     }
 
@@ -289,6 +286,9 @@ impl Widget<AppState> for DrawingWidget {
             }
             if data.affine == Affine::FLIP_X {
                 ctx.transform(Affine::translate((-width, 0.0)));
+            }
+            if data.affine == Affine::FLIP_Y * Affine::FLIP_X {
+                ctx.transform(Affine::translate((-width, -height)));
             }
             let image = ctx.render_ctx.make_image(data.image.width(), data.image.height(), data.image.raw_pixels(), ImageFormat::RgbaSeparate).unwrap();
             ctx.render_ctx.draw_image(&image, Rect::new(0f64, 0f64, width, height), InterpolationMode::Bilinear);
@@ -543,9 +543,9 @@ impl Widget<AppState> for DrawingWidget {
 
         if data.save.get() {
             let x = ctx.window().get_position().x;
-            let y = ctx.window().get_position().y + 28.0;
+            let y = ctx.window().get_position().y + 24.0;
             let width = ctx.window().get_size().width;
-            let height = ctx.window().get_size().height - 28.0;
+            let height = ctx.window().get_size().height - 24.0;
             let image = capture_image_area(Rect::new(x,y,width, height));
             image.save(data.image_path.to_string()).unwrap();
             data.save.set(false);

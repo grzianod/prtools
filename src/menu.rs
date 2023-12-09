@@ -3,6 +3,7 @@ use std::process::exit;
 use druid::{Affine, Color, commands, Env};
 use crate::utils::{Action, AppState, Selection};
 use druid::RawMods;
+use druid_shell::piet::ImageBuf;
 
 pub fn create_menu() -> druid::Menu<AppState> {
 
@@ -285,7 +286,7 @@ pub fn create_menu() -> druid::Menu<AppState> {
                     Action::Circle(_, _, _, _, _, _) => { format!("Redo Circle") }
                     Action::Ellipse(_, _, _, _, _, _) => { format!("Redo Ellipse") }
                     Action::Text(_, _, _, _) => { format!("Redo Text") }
-                    _ => { "Redo".to_string() }
+                    _ => { "Undo".to_string() }
                 }
             } else { "Redo".to_string() }
         }).hotkey(Some(RawMods::MetaShift), "Z")
@@ -312,23 +313,12 @@ pub fn create_menu() -> druid::Menu<AppState> {
             }))
         .entry(druid::MenuItem::new("Flip Vertical").hotkey(Some(RawMods::Meta), "L")
             .on_activate(|_, data: &mut AppState, _| {
-                if data.affine == Affine::FLIP_Y {
-                    data.affine = Affine::IDENTITY;
-                }
-                else {
-                    data.affine = Affine::FLIP_Y;
-                }
+                data.affine = data.affine * Affine::FLIP_Y;
                 data.repaint = true;
             }))
         .entry(druid::MenuItem::new("Flip Horizontal").hotkey(Some(RawMods::Meta), "I")
             .on_activate(|_, data: &mut AppState, _| {
-                if data.affine == Affine::FLIP_X {
-                    data.affine = Affine::IDENTITY;
-                }
-                else {
-                    data.affine = Affine::FLIP_X;
-                }
-                data.repaint = true;
+                data.affine = data.affine * Affine::FLIP_X;
                 data.repaint = true;
             }));
 

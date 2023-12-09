@@ -25,9 +25,6 @@ fn main() -> Result<(), PlatformError> {
         exit(255);
     }
 
-    //let menu = Menu::new().add_item(1, "Test", Some(&HotKey::new(RawMods::CtrlMeta, "K")), Some(true), true);
-
-
     let monitor = Screen::get_monitors().first().unwrap().clone();
 
     let image = image::open(arg.path.to_string()).unwrap();
@@ -45,6 +42,7 @@ fn main() -> Result<(), PlatformError> {
     );
 
     initial_state.scale_factor.set( image_width / monitor_width + 0.5f64);
+    println!("{}", initial_state.scale_factor.get());
     let window_width = image_width / initial_state.scale_factor.get();
     let window_height = (image_height * window_width)/image_width;
 
