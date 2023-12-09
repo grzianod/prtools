@@ -39,7 +39,7 @@ pub enum Action {
     Circle(Vec<Affine>, Point, f64, Color, bool, f64), // Stores circle points and color
     Ellipse(Vec<Affine>, Point, Point, Color, bool, f64), // Stores ellipse points and color
     Arrow(Vec<Affine>, Point, Point, Color, f64), // Stores arrow points and color
-    Text(Vec<Affine>, Point, String, Color),  // Stores position, text, and color
+    Text(Vec<Affine>, Point, String, Color, f64),  // Stores position, text, and color
     Crop(DynamicImage, Point, Point),
 }
 
@@ -52,7 +52,7 @@ impl Action {
             Selection::Circle => Self::Circle(Vec::<Affine>::new(),Point::ZERO, 0.0, Color::RED, false,2.0),
             Selection::Ellipse => Self::Ellipse(Vec::<Affine>::new(),Point::ZERO, Point::ZERO, Color::RED, false, 2.0),
             Selection::Arrow => Self::Arrow(Vec::<Affine>::new(),Point::ZERO, Point::ZERO, Color::RED, 2.0),
-            Selection::Text => Self::Text(Vec::<Affine>::new(),Point::ZERO, String::from("") ,Color::RED),
+            Selection::Text => Self::Text(Vec::<Affine>::new(),Point::ZERO, String::from("") ,Color::RED, 24f64),
             Selection::Crop => Self::Crop(DynamicImage::default(), Point::ZERO, Point::ZERO),
         }
     }
@@ -90,7 +90,9 @@ pub struct AppState {
     pub update: Cell<bool>,
     pub zoom: f64,
     #[data(same_fn = "PartialEq::eq")]
-    pub crop: Cell<bool>
+    pub crop: Cell<bool>,
+    pub font_size: f64,
+    pub rotated: bool
 }
 
 impl AppState {
@@ -117,6 +119,8 @@ impl AppState {
             zoom: 1f64,
             save: Cell::new(false),
             crop: Cell::new(false),
+            font_size: 24f64,
+            rotated: false,
         }
     }
 }
