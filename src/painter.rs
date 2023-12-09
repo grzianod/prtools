@@ -55,7 +55,24 @@ impl Widget<AppState> for DrawingWidget {
                     if let Some(action) = data.actions.last_mut() {
                         if let Action::Text(affine, _, string, _) = action {
                             *affine = data.affine.clone();
-                            string.push(key.code.to_string().chars().next().unwrap());
+                            if key.code.eq(&Code::Backspace){
+                                println!("delete last char");
+                                if !string.is_empty() {
+                                    string.pop();
+                                }
+                            }
+                            else if key.code.eq(&Code::ShiftLeft)||
+                                key.code.eq(&Code::ShiftRight) ||
+                                key.code.eq(&Code::Tab) ||
+                                key.code.eq(&Code::MetaLeft) ||
+                                key.code.eq(&Code::MetaRight) ||
+                                key.code.eq(&Code::AltLeft) ||
+                                key.code.eq(&Code::AltRight){
+                                println!("do nothing!");
+                            }
+                            else if let char = key.key.to_string(){
+                                string.push(char.chars().next().unwrap());
+                            }
                         }
                     }
                 }
@@ -127,6 +144,7 @@ impl Widget<AppState> for DrawingWidget {
                     }
                     Action::Text(ref mut affine, ref mut position, _, ref mut color) => {
                         if data.is_writing_text { return; }
+                        ctx.request_focus();
                         *position = e.pos;
                         *color = data.color;
                         *affine = data.affine.clone();
@@ -202,6 +220,7 @@ impl Widget<AppState> for DrawingWidget {
                 if let Some(Action::Arrow(_, _, _, _, _)) = data.actions.last_mut() {}
                 if let Some(Action::Text(_, position, _, color)) = data.actions.last_mut() {
                     if data.is_writing_text { return; }
+                    ctx.request_focus();
                     *position = e.pos;
                     *color = data.color;
                     // Set a flag or state indicating that text input is needed

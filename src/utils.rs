@@ -52,7 +52,7 @@ impl Action {
             Selection::Circle => Self::Circle(Vec::<Affine>::new(),Point::ZERO, 0.0, Color::RED, false,2.0),
             Selection::Ellipse => Self::Ellipse(Vec::<Affine>::new(),Point::ZERO, Point::ZERO, Color::RED, false, 2.0),
             Selection::Arrow => Self::Arrow(Vec::<Affine>::new(),Point::ZERO, Point::ZERO, Color::RED, 2.0),
-            Selection::Text => Self::Text(Vec::<Affine>::new(),Point::ZERO, String::from("test") ,Color::RED),
+            Selection::Text => Self::Text(Vec::<Affine>::new(),Point::ZERO, String::from("") ,Color::RED),
             Selection::Crop => Self::Crop(DynamicImage::default(), Point::ZERO, Point::ZERO),
         }
     }
