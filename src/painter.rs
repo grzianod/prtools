@@ -4,11 +4,12 @@ use druid::RenderContext;
 use druid::{Env, Color};
 use druid::{Data, Lens};
 use druid::kurbo::{Circle, Line, Point, Vec2, Ellipse};
-use druid::piet::{ImageFormat, InterpolationMode, StrokeStyle};
+use druid::piet::{ImageFormat, InterpolationMode, PietTextLayout, StrokeStyle};
 use druid::Event;
 use image::{GenericImageView, DynamicImage};
 use num_traits::cast::FromPrimitive;
 use druid::Screen as dScreen;
+use druid::widget::TextBox;
 use screenshots::Screen;
 #[cfg(target_os = "windows")]
 use winapi::um::winuser::{GetSystemMetrics, SM_CYCAPTION};
@@ -53,10 +54,9 @@ impl Widget<AppState> for DrawingWidget {
                         return;
                     }
                     if let Some(action) = data.actions.last_mut() {
-                        if let Action::Text(affine, _, string, _) = action {
+                        if let Action::Text(affine, _, string, _, _) = action {
                             *affine = data.affine.clone();
                             if key.code.eq(&Code::Backspace){
-                                println!("delete last char");
                                 if !string.is_empty() {
                                     string.pop();
                                 }
@@ -68,7 +68,6 @@ impl Widget<AppState> for DrawingWidget {
                                 key.code.eq(&Code::MetaRight) ||
                                 key.code.eq(&Code::AltLeft) ||
                                 key.code.eq(&Code::AltRight){
-                                println!("do nothing!");
                             }
                             else if let char = key.key.to_string(){
                                 string.push(char.chars().next().unwrap());
@@ -80,16 +79,12 @@ impl Widget<AppState> for DrawingWidget {
             Event::Paste(clipboard) => {
                 if data.is_writing_text {
                     if let Some(action) = data.actions.last_mut() {
-                        if let Action::Text(affine, _, string, _) = action {
+                        if let Action::Text(affine, _, string, _, _) = action {
                             *affine = data.affine.clone();
                             *string = clipboard.get_string().unwrap();
                         }
                     }
                 }
-            }
-            Event::Zoom(value) => {
-                data.zoom = data.zoom * (1f64 + value);
-                println!("{}", data.zoom);
             }
             Event::MouseDown(e) => {
                 if data.is_picking_color {
@@ -142,12 +137,13 @@ impl Widget<AppState> for DrawingWidget {
                         *stroke = data.stroke;
                         *affine = data.affine.clone();
                     }
-                    Action::Text(ref mut affine, ref mut position, _, ref mut color) => {
+                    Action::Text(ref mut affine, ref mut position, _, ref mut color, ref mut font_size) => {
                         if data.is_writing_text { return; }
                         ctx.request_focus();
                         *position = e.pos;
                         *color = data.color;
                         *affine = data.affine.clone();
+                        *font_size = data.font_size;
                         // Set a flag or state indicating that text input is needed
                         data.is_writing_text = true;
                     }
@@ -218,7 +214,7 @@ impl Widget<AppState> for DrawingWidget {
                     *end_point = e.pos;
                 }
                 if let Some(Action::Arrow(_, _, _, _, _)) = data.actions.last_mut() {}
-                if let Some(Action::Text(_, position, _, color)) = data.actions.last_mut() {
+                if let Some(Action::Text(_, position, _, color, _)) = data.actions.last_mut() {
                     if data.is_writing_text { return; }
                     ctx.request_focus();
                     *position = e.pos;
@@ -283,13 +279,32 @@ impl Widget<AppState> for DrawingWidget {
     fn layout(&mut self, ctx: &mut druid::LayoutCtx, _bc: &druid::BoxConstraints, data: &AppState, _env: &Env) -> druid::Size {
         let monitor = dScreen::get_monitors().first().unwrap().clone();
         let monitor_width = monitor.virtual_work_rect().width();
-        let image_width = data.image.width() as f64;
-        let image_height = data.image.height() as f64;
+        let monitor_height = monitor.virtual_work_rect().height();
 
-        data.scale_factor.set( image_width / monitor_width + 0.5f64);
-        let window_width = image_width / data.scale_factor.get();
-        let window_height = (image_height * window_width)/image_width;
-        data.center.set(Point::new(window_width/2f64, window_height/2f64));
+            let image_width = data.image.width() as f64;
+            let image_height = data.image.height() as f64;
+
+        let (image_width, image_height) = if data.rotated {
+            (image_height, image_width)
+        }
+        else {
+            (image_width, image_height)
+        };
+
+        let window_width;
+        let window_height;
+        if image_width > image_height {
+            data.scale_factor.set(image_width / monitor_width + 0.5f64);
+            window_width = image_width / data.scale_factor.get();
+            window_height = (image_height * window_width) / image_width;
+            data.center.set(Point::new(window_width / 2f64, window_height / 2f64));
+        }
+        else {
+            data.scale_factor.set(image_height/monitor_height + 0.5f64);
+            window_height = image_height / data.scale_factor.get();
+            window_width = (image_width * window_height)/ image_height;
+            data.center.set(Point::new(window_width / 2f64, window_height / 2f64));
+        }
 
         ctx.window().set_size((window_width, window_height + 24.0));
         druid::Size::new(window_width, window_height)
@@ -507,7 +522,7 @@ impl Widget<AppState> for DrawingWidget {
                         ctx.render_ctx.stroke(arrowhead, color, *stroke);
                     });
                 }
-                Action::Text(affine, pos, text, color) => {
+                Action::Text(affine, pos, text, color, font_size) => {
                     ctx.with_save(|ctx| {
                         for a in &data.affine {
                             ctx.render_ctx.transform(*a);
@@ -520,7 +535,7 @@ impl Widget<AppState> for DrawingWidget {
                             if a == &Affine::FLIP_X { ctx.render_ctx.transform(Affine::translate((-width, 0.0))); }
                         }
                         let mut layout = TextLayout::<String>::from_text(text.to_string());
-                        layout.set_font(FontDescriptor::new(FontFamily::SYSTEM_UI).with_size(24.0));
+                        layout.set_font(FontDescriptor::new(FontFamily::SYSTEM_UI).with_size(*font_size));
                         layout.set_text_color(*color);
                         layout.rebuild_if_needed(ctx.text(), env);
                         layout.draw(ctx, *pos);
