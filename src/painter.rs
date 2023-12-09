@@ -169,7 +169,7 @@ impl Widget<AppState> for DrawingWidget {
                             Action::Arrow(_, _, end_point, _, _) => {
                                 *end_point = e.pos;
                             }
-                            Action::Crop(_, start_point, end_point) => {
+                            Action::Crop(_, _, end_point) => {
                                 *end_point = e.pos;
                             }
                             _ => {}

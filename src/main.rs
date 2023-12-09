@@ -42,7 +42,6 @@ fn main() -> Result<(), PlatformError> {
     );
 
     initial_state.scale_factor.set( image_width / monitor_width + 0.5f64);
-    println!("{}", initial_state.scale_factor.get());
     let window_width = image_width / initial_state.scale_factor.get();
     let window_height = (image_height * window_width)/image_width;
 
