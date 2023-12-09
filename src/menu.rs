@@ -1,6 +1,6 @@
 use std::fs;
 use std::process::exit;
-use druid::{Affine, Color, commands, Env};
+use druid::{Affine, Color, commands, Env, Point};
 use crate::utils::{Action, AppState, Selection};
 use druid::RawMods;
 
@@ -23,13 +23,19 @@ pub fn create_menu() -> druid::Menu<AppState> {
                 data.save.set(true);
                 data.repaint = true;
             })
+            .enabled_if(|data: &AppState, _| {
+                let mut c = 0;
+                for a in &data.affine {
+                    if a == &Affine::rotate_about(std::f64::consts::FRAC_PI_2, data.center.get()) { c += 1; }
+                    if a == &Affine::rotate_about(-std::f64::consts::FRAC_PI_2, data.center.get()) { c += 1; }
+                }
+                c%2 == 0
+            })
         )
         .entry(druid::MenuItem::new("Delete").hotkey(Some(RawMods::Meta), "D")
             .on_activate(move |_, data: &mut AppState, _| {
-
                     fs::remove_file(data.image_path.to_string()).unwrap();
                     exit(0);
-
             })
         );
 
@@ -288,7 +294,7 @@ pub fn create_menu() -> druid::Menu<AppState> {
                     _ => { "Undo".to_string() }
                 }
             } else { "Redo".to_string() }
-        }).hotkey(Some(RawMods::MetaShift), "Z")
+        }).hotkey(Some(RawMods::AltMetaShift), "Z")
             .on_activate(|_, data: &mut AppState, _| {
                 if let Some(redo_action) = data.redo_actions.pop() {
                     data.actions.push(redo_action);
@@ -306,18 +312,25 @@ pub fn create_menu() -> druid::Menu<AppState> {
                 data.crop.set(true);
                 data.repaint = true;
             }))
-        .entry(druid::MenuItem::new("Rotate").hotkey(Some(RawMods::Meta), "R")
+        .entry(druid::MenuItem::new("Rotate Clockwise").hotkey(Some(RawMods::Meta), "T")
             .on_activate(|_, data: &mut AppState, _| {
+                data.affine.push(Affine::rotate_about(std::f64::consts::FRAC_PI_2, data.center.get()));
+                println!("{:?}", Affine::rotate_about(std::f64::consts::FRAC_PI_2, Point::new(data.image.width() as f64/2f64, data.image.height() as f64/2f64)));
                 data.repaint = true;
             }))
-        .entry(druid::MenuItem::new("Flip Vertical").hotkey(Some(RawMods::Meta), "L")
+        .entry(druid::MenuItem::new("Rotate Counterclockwise").hotkey(Some(RawMods::Meta), "W")
             .on_activate(|_, data: &mut AppState, _| {
-                data.affine = data.affine * Affine::FLIP_Y;
+                data.affine.push(Affine::rotate_about(-std::f64::consts::FRAC_PI_2, data.center.get()));
                 data.repaint = true;
             }))
-        .entry(druid::MenuItem::new("Flip Horizontal").hotkey(Some(RawMods::Meta), "I")
+        .entry(druid::MenuItem::new("Flip Vertical").hotkey(Some(RawMods::Meta), "X")
             .on_activate(|_, data: &mut AppState, _| {
-                data.affine = data.affine * Affine::FLIP_X;
+                data.affine.push(Affine::FLIP_Y);
+                data.repaint = true;
+            }))
+        .entry(druid::MenuItem::new("Flip Horizontal").hotkey(Some(RawMods::Meta), "Y")
+            .on_activate(|_, data: &mut AppState, _| {
+                data.affine.push(Affine::FLIP_X);
                 data.repaint = true;
             }));
 

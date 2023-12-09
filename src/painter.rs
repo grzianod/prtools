@@ -54,7 +54,7 @@ impl Widget<AppState> for DrawingWidget {
                     }
                     if let Some(action) = data.actions.last_mut() {
                         if let Action::Text(affine, _, string, _) = action {
-                            *affine = data.affine;
+                            *affine = data.affine.clone();
                             string.push(key.code.to_string().chars().next().unwrap());
                         }
                     }
@@ -64,7 +64,7 @@ impl Widget<AppState> for DrawingWidget {
                 if data.is_writing_text {
                     if let Some(action) = data.actions.last_mut() {
                         if let Action::Text(affine, _, string, _) = action {
-                            *affine = data.affine;
+                            *affine = data.affine.clone();
                             *string = clipboard.get_string().unwrap();
                         }
                     }
@@ -87,13 +87,13 @@ impl Widget<AppState> for DrawingWidget {
                         points.push(e.pos);
                         *color = data.color;
                         *stroke = data.stroke;
-                        *affine = data.affine;
+                        *affine = data.affine.clone();
                     }
                     Action::Highlighter(ref mut affine, ref mut points, ref mut color, ref mut stroke) => {
                         points.push(e.pos);
                         *color = data.color;
                         *stroke = data.stroke;
-                        *affine = data.affine;
+                        *affine = data.affine.clone();
                     }
                     Action::Rectangle(ref mut affine, ref mut start_point, ref mut end_point, ref mut color, ref mut fill, ref mut stroke) => {
                         *start_point = e.pos;
@@ -101,14 +101,14 @@ impl Widget<AppState> for DrawingWidget {
                         *fill = data.fill_color;
                         *color = data.color;
                         *stroke = data.stroke;
-                        *affine = data.affine;
+                        *affine = data.affine.clone();
                     }
                     Action::Circle(ref mut affine, ref mut center, _, ref mut color, ref mut fill, ref mut stroke) => {
                         *center = e.pos;
                         *fill = data.fill_color;
                         *color = data.color;
                         *stroke = data.stroke;
-                        *affine = data.affine;
+                        *affine = data.affine.clone();
                     }
                     Action::Ellipse(ref mut affine, ref mut start_point, ref mut end_point, ref mut color, ref mut fill, ref mut stroke) => {
                         *start_point = e.pos;
@@ -116,20 +116,20 @@ impl Widget<AppState> for DrawingWidget {
                         *fill = data.fill_color;
                         *color = data.color;
                         *stroke = data.stroke;
-                        *affine = data.affine;
+                        *affine = data.affine.clone();
                     }
                     Action::Arrow(ref mut affine, ref mut start_point, ref mut end_point, ref mut color, ref mut stroke) => {
                         *start_point = e.pos;
                         *end_point = e.pos;
                         *color = data.color;
                         *stroke = data.stroke;
-                        *affine = data.affine;
+                        *affine = data.affine.clone();
                     }
                     Action::Text(ref mut affine, ref mut position, _, ref mut color) => {
                         if data.is_writing_text { return; }
                         *position = e.pos;
                         *color = data.color;
-                        *affine = data.affine;
+                        *affine = data.affine.clone();
                         // Set a flag or state indicating that text input is needed
                         data.is_writing_text = true;
                     }
@@ -270,25 +270,21 @@ impl Widget<AppState> for DrawingWidget {
         data.scale_factor.set( image_width / monitor_width + 0.5f64);
         let window_width = image_width / data.scale_factor.get();
         let window_height = (image_height * window_width)/image_width;
+        data.center.set(Point::new(window_width/2f64, window_height/2f64));
 
         ctx.window().set_size((window_width, window_height + 24.0));
         druid::Size::new(window_width, window_height)
-    }
+        }
 
     fn paint(&mut self, ctx: &mut druid::PaintCtx, data: &AppState, env: &Env) {
         let width = ctx.size().width;
         let height = ctx.size().height;
 
         ctx.with_save(|ctx| {
-            ctx.render_ctx.transform(data.affine);
-            if data.affine == Affine::FLIP_Y {
-                ctx.transform(Affine::translate((0.0, -height)));
-            }
-            if data.affine == Affine::FLIP_X {
-                ctx.transform(Affine::translate((-width, 0.0)));
-            }
-            if data.affine == Affine::FLIP_Y * Affine::FLIP_X {
-                ctx.transform(Affine::translate((-width, -height)));
+            for a in &data.affine {
+                ctx.render_ctx.transform(*a);
+                if a == &Affine::FLIP_Y { ctx.render_ctx.transform(Affine::translate((0.0, -height))); }
+                if a == &Affine::FLIP_X { ctx.render_ctx.transform(Affine::translate((-width, 0.0))); }
             }
             let image = ctx.render_ctx.make_image(data.image.width(), data.image.height(), data.image.raw_pixels(), ImageFormat::RgbaSeparate).unwrap();
             ctx.render_ctx.draw_image(&image, Rect::new(0f64, 0f64, width, height), InterpolationMode::Bilinear);
@@ -304,16 +300,15 @@ impl Widget<AppState> for DrawingWidget {
                 Action::Highlighter(affine, action, color, stroke) => {
                     if action.len() < 2 {
                         ctx.with_save(|ctx| {
-                            let current_affine = data.affine * *affine;
-                            ctx.render_ctx.transform(current_affine);
-                            if current_affine == Affine::FLIP_Y {
-                                ctx.transform(Affine::translate((0.0, -height)));
+                            for a in &data.affine {
+                                ctx.render_ctx.transform(*a);
+                                if a == &Affine::FLIP_Y { ctx.render_ctx.transform(Affine::translate((0.0, -height))); }
+                                if a == &Affine::FLIP_X { ctx.render_ctx.transform(Affine::translate((-width, 0.0))); }
                             }
-                            if current_affine == Affine::FLIP_X {
-                                ctx.transform(Affine::translate((-width, 0.0)));
-                            }
-                            if current_affine == Affine::FLIP_X * Affine::FLIP_Y {
-                                ctx.transform(Affine::translate((-width, -height)));
+                            for a in affine {
+                                ctx.render_ctx.transform(*a);
+                                if a == &Affine::FLIP_Y { ctx.render_ctx.transform(Affine::translate((0.0, -height))); }
+                                if a == &Affine::FLIP_X { ctx.render_ctx.transform(Affine::translate((-width, 0.0))); }
                             }
                             ctx.render_ctx.fill(Circle::new(*action.last().unwrap(), stroke * 2f64), &color.with_alpha(0.25));
                         });
@@ -322,16 +317,15 @@ impl Widget<AppState> for DrawingWidget {
                     for pair in action.windows(2) {
                         if let [start, end] = pair {
                             ctx.with_save(|ctx| {
-                                let current_affine = data.affine * *affine;
-                                ctx.render_ctx.transform(current_affine);
-                                if current_affine == Affine::FLIP_Y {
-                                    ctx.transform(Affine::translate((0.0, -height)));
+                                for a in &data.affine {
+                                    ctx.render_ctx.transform(*a);
+                                    if a == &Affine::FLIP_Y { ctx.render_ctx.transform(Affine::translate((0.0, -height))); }
+                                    if a == &Affine::FLIP_X { ctx.render_ctx.transform(Affine::translate((-width, 0.0))); }
                                 }
-                                if current_affine == Affine::FLIP_X {
-                                    ctx.transform(Affine::translate((-width, 0.0)));
-                                }
-                                if current_affine == Affine::FLIP_X * Affine::FLIP_Y {
-                                    ctx.transform(Affine::translate((-width, -height)));
+                                for a in affine {
+                                    ctx.render_ctx.transform(*a);
+                                    if a == &Affine::FLIP_Y { ctx.render_ctx.transform(Affine::translate((0.0, -height))); }
+                                    if a == &Affine::FLIP_X { ctx.render_ctx.transform(Affine::translate((-width, 0.0))); }
                                 }
                                 let line = Line::new(*start, *end);
                                 ctx.render_ctx.stroke(line, &color.with_alpha(0.25), stroke * 3f64)
@@ -342,16 +336,15 @@ impl Widget<AppState> for DrawingWidget {
                 Action::Pen(affine, action, color, stroke) => {
                     if action.len() < 2 {
                         ctx.with_save(|ctx| {
-                            let current_affine = data.affine * *affine;
-                            ctx.render_ctx.transform(current_affine);
-                            if current_affine == Affine::FLIP_Y {
-                                ctx.transform(Affine::translate((0.0, -height)));
+                            for a in &data.affine {
+                                ctx.render_ctx.transform(*a);
+                                if a == &Affine::FLIP_Y { ctx.render_ctx.transform(Affine::translate((0.0, -height))); }
+                                if a == &Affine::FLIP_X { ctx.render_ctx.transform(Affine::translate((-width, 0.0))); }
                             }
-                            if current_affine == Affine::FLIP_X {
-                                ctx.transform(Affine::translate((-width, 0.0)));
-                            }
-                            if current_affine == Affine::FLIP_X * Affine::FLIP_Y {
-                                ctx.transform(Affine::translate((-width, -height)));
+                            for a in affine {
+                                ctx.render_ctx.transform(*a);
+                                if a == &Affine::FLIP_Y { ctx.render_ctx.transform(Affine::translate((0.0, -height))); }
+                                if a == &Affine::FLIP_X { ctx.render_ctx.transform(Affine::translate((-width, 0.0))); }
                             }
                             ctx.render_ctx.fill(Circle::new(*action.last().unwrap(), stroke / 2f64), color);
                         });
@@ -359,16 +352,15 @@ impl Widget<AppState> for DrawingWidget {
                     for pair in action.windows(2) {
                         if let [start, end] = pair {
                             ctx.with_save(|ctx| {
-                                let current_affine = data.affine * *affine;
-                                ctx.render_ctx.transform(current_affine);
-                                if current_affine == Affine::FLIP_Y {
-                                    ctx.transform(Affine::translate((0.0, -height)));
+                                for a in &data.affine {
+                                    ctx.render_ctx.transform(*a);
+                                    if a == &Affine::FLIP_Y { ctx.render_ctx.transform(Affine::translate((0.0, -height))); }
+                                    if a == &Affine::FLIP_X { ctx.render_ctx.transform(Affine::translate((-width, 0.0))); }
                                 }
-                                if current_affine == Affine::FLIP_X {
-                                    ctx.transform(Affine::translate((-width, 0.0)));
-                                }
-                                if current_affine == Affine::FLIP_X * Affine::FLIP_Y {
-                                    ctx.transform(Affine::translate((-width, -height)));
+                                for a in affine {
+                                    ctx.render_ctx.transform(*a);
+                                    if a == &Affine::FLIP_Y { ctx.render_ctx.transform(Affine::translate((0.0, -height))); }
+                                    if a == &Affine::FLIP_X { ctx.render_ctx.transform(Affine::translate((-width, 0.0))); }
                                 }
                                 let line = Line::new(*start, *end);
                                 ctx.render_ctx.stroke(line, color, *stroke);
@@ -379,31 +371,29 @@ impl Widget<AppState> for DrawingWidget {
                 Action::Rectangle(affine, start_point, end_point, color, fill, stroke) => {
                     if *fill {
                         ctx.with_save(|ctx| {
-                            let current_affine = data.affine * *affine;
-                            ctx.render_ctx.transform(current_affine);
-                            if current_affine == Affine::FLIP_Y {
-                                ctx.transform(Affine::translate((0.0, -height)));
+                            for a in &data.affine {
+                                ctx.render_ctx.transform(*a);
+                                if a == &Affine::FLIP_Y { ctx.render_ctx.transform(Affine::translate((0.0, -height))); }
+                                if a == &Affine::FLIP_X { ctx.render_ctx.transform(Affine::translate((-width, 0.0))); }
                             }
-                            if current_affine == Affine::FLIP_X {
-                                ctx.transform(Affine::translate((-width, 0.0)));
-                            }
-                            if current_affine == Affine::FLIP_X * Affine::FLIP_Y {
-                                ctx.transform(Affine::translate((-width, -height)));
+                            for a in affine {
+                                ctx.render_ctx.transform(*a);
+                                if a == &Affine::FLIP_Y { ctx.render_ctx.transform(Affine::translate((0.0, -height))); }
+                                if a == &Affine::FLIP_X { ctx.render_ctx.transform(Affine::translate((-width, 0.0))); }
                             }
                             ctx.render_ctx.fill_even_odd(Rect::new(start_point.x, start_point.y, end_point.x, end_point.y), color);
                         });
                         } else {
                         ctx.with_save(|ctx| {
-                            let current_affine = data.affine * *affine;
-                            ctx.render_ctx.transform(current_affine);
-                            if current_affine == Affine::FLIP_Y {
-                                ctx.transform(Affine::translate((0.0, -height)));
+                            for a in &data.affine {
+                                ctx.render_ctx.transform(*a);
+                                if a == &Affine::FLIP_Y { ctx.render_ctx.transform(Affine::translate((0.0, -height))); }
+                                if a == &Affine::FLIP_X { ctx.render_ctx.transform(Affine::translate((-width, 0.0))); }
                             }
-                            if current_affine == Affine::FLIP_X {
-                                ctx.transform(Affine::translate((-width, 0.0)));
-                            }
-                            if current_affine == Affine::FLIP_X * Affine::FLIP_Y {
-                                ctx.transform(Affine::translate((-width, -height)));
+                            for a in affine {
+                                ctx.render_ctx.transform(*a);
+                                if a == &Affine::FLIP_Y { ctx.render_ctx.transform(Affine::translate((0.0, -height))); }
+                                if a == &Affine::FLIP_X { ctx.render_ctx.transform(Affine::translate((-width, 0.0))); }
                             }
                             ctx.render_ctx.stroke(Rect::new(start_point.x, start_point.y, end_point.x, end_point.y), color, *stroke);
                         });
@@ -412,31 +402,29 @@ impl Widget<AppState> for DrawingWidget {
                 Action::Circle(affine, center, radius, _, fill, stroke) => {
                     if *fill {
                         ctx.with_save(|ctx| {
-                            let current_affine = data.affine * *affine;
-                            ctx.render_ctx.transform(current_affine);
-                            if current_affine == Affine::FLIP_Y {
-                                ctx.transform(Affine::translate((0.0, -height)));
+                            for a in &data.affine {
+                                ctx.render_ctx.transform(*a);
+                                if a == &Affine::FLIP_Y { ctx.render_ctx.transform(Affine::translate((0.0, -height))); }
+                                if a == &Affine::FLIP_X { ctx.render_ctx.transform(Affine::translate((-width, 0.0))); }
                             }
-                            if current_affine == Affine::FLIP_X {
-                                ctx.transform(Affine::translate((-width, 0.0)));
-                            }
-                            if current_affine == Affine::FLIP_X * Affine::FLIP_Y {
-                                ctx.transform(Affine::translate((-width, -height)));
+                            for a in affine {
+                                ctx.render_ctx.transform(*a);
+                                if a == &Affine::FLIP_Y { ctx.render_ctx.transform(Affine::translate((0.0, -height))); }
+                                if a == &Affine::FLIP_X { ctx.render_ctx.transform(Affine::translate((-width, 0.0))); }
                             }
                             ctx.render_ctx.fill_even_odd(Circle::new(*center, *radius), &data.color);
                         });
                         } else {
                         ctx.with_save(|ctx| {
-                            let current_affine = data.affine * *affine;
-                            ctx.render_ctx.transform(current_affine);
-                            if current_affine == Affine::FLIP_Y {
-                                ctx.transform(Affine::translate((0.0, -height)));
+                            for a in &data.affine {
+                                ctx.render_ctx.transform(*a);
+                                if a == &Affine::FLIP_Y { ctx.render_ctx.transform(Affine::translate((0.0, -height))); }
+                                if a == &Affine::FLIP_X { ctx.render_ctx.transform(Affine::translate((-width, 0.0))); }
                             }
-                            if current_affine == Affine::FLIP_X {
-                                ctx.transform(Affine::translate((-width, 0.0)));
-                            }
-                            if current_affine == Affine::FLIP_X * Affine::FLIP_Y {
-                                ctx.transform(Affine::translate((-width, -height)));
+                            for a in affine {
+                                ctx.render_ctx.transform(*a);
+                                if a == &Affine::FLIP_Y { ctx.render_ctx.transform(Affine::translate((0.0, -height))); }
+                                if a == &Affine::FLIP_X { ctx.render_ctx.transform(Affine::translate((-width, 0.0))); }
                             }
                             ctx.render_ctx.stroke(Circle::new(*center, *radius), &data.color, *stroke);
                         });
@@ -445,31 +433,29 @@ impl Widget<AppState> for DrawingWidget {
                 Action::Ellipse(affine, start_point, end_point, color, fill, stroke) => {
                     if *fill {
                         ctx.with_save(|ctx| {
-                            let current_affine = data.affine * *affine;
-                            ctx.render_ctx.transform(current_affine);
-                            if current_affine == Affine::FLIP_Y {
-                                ctx.transform(Affine::translate((0.0, -height)));
+                            for a in &data.affine {
+                                ctx.render_ctx.transform(*a);
+                                if a == &Affine::FLIP_Y { ctx.render_ctx.transform(Affine::translate((0.0, -height))); }
+                                if a == &Affine::FLIP_X { ctx.render_ctx.transform(Affine::translate((-width, 0.0))); }
                             }
-                            if current_affine == Affine::FLIP_X {
-                                ctx.transform(Affine::translate((-width, 0.0)));
-                            }
-                            if current_affine == Affine::FLIP_X * Affine::FLIP_Y {
-                                ctx.transform(Affine::translate((-width, -height)));
+                            for a in affine {
+                                ctx.render_ctx.transform(*a);
+                                if a == &Affine::FLIP_Y { ctx.render_ctx.transform(Affine::translate((0.0, -height))); }
+                                if a == &Affine::FLIP_X { ctx.render_ctx.transform(Affine::translate((-width, 0.0))); }
                             }
                             ctx.render_ctx.fill_even_odd(Ellipse::from_rect(Rect::new(start_point.x, start_point.y, end_point.x, end_point.y)), color);
                         });
                         } else {
                         ctx.with_save(|ctx| {
-                            let current_affine = data.affine * *affine;
-                            ctx.render_ctx.transform(current_affine);
-                            if current_affine == Affine::FLIP_Y {
-                                ctx.transform(Affine::translate((0.0, -height)));
+                            for a in &data.affine {
+                                ctx.render_ctx.transform(*a);
+                                if a == &Affine::FLIP_Y { ctx.render_ctx.transform(Affine::translate((0.0, -height))); }
+                                if a == &Affine::FLIP_X { ctx.render_ctx.transform(Affine::translate((-width, 0.0))); }
                             }
-                            if current_affine == Affine::FLIP_X {
-                                ctx.transform(Affine::translate((-width, 0.0)));
-                            }
-                            if current_affine == Affine::FLIP_X * Affine::FLIP_Y {
-                                ctx.transform(Affine::translate((-width, -height)));
+                            for a in affine {
+                                ctx.render_ctx.transform(*a);
+                                if a == &Affine::FLIP_Y { ctx.render_ctx.transform(Affine::translate((0.0, -height))); }
+                                if a == &Affine::FLIP_X { ctx.render_ctx.transform(Affine::translate((-width, 0.0))); }
                             }
                             ctx.render_ctx.stroke(Ellipse::from_rect(Rect::new(start_point.x, start_point.y, end_point.x, end_point.y)), color, *stroke);
                         });
@@ -477,16 +463,15 @@ impl Widget<AppState> for DrawingWidget {
                 }
                 Action::Arrow(affine, start_point, end_point, color, stroke) => {
                     ctx.with_save(|ctx| {
-                        let current_affine = data.affine * *affine;
-                        ctx.render_ctx.transform(current_affine);
-                        if current_affine == Affine::FLIP_Y {
-                            ctx.transform(Affine::translate((0.0, -height)));
+                        for a in &data.affine {
+                            ctx.render_ctx.transform(*a);
+                            if a == &Affine::FLIP_Y { ctx.render_ctx.transform(Affine::translate((0.0, -height))); }
+                            if a == &Affine::FLIP_X { ctx.render_ctx.transform(Affine::translate((-width, 0.0))); }
                         }
-                        if current_affine == Affine::FLIP_X {
-                            ctx.transform(Affine::translate((-width, 0.0)));
-                        }
-                        if current_affine == Affine::FLIP_X * Affine::FLIP_Y {
-                            ctx.transform(Affine::translate((-width, -height)));
+                        for a in affine {
+                            ctx.render_ctx.transform(*a);
+                            if a == &Affine::FLIP_Y { ctx.render_ctx.transform(Affine::translate((0.0, -height))); }
+                            if a == &Affine::FLIP_X { ctx.render_ctx.transform(Affine::translate((-width, 0.0))); }
                         }
                         // Draw the line
                         let line = Line::new(*start_point, *end_point);
@@ -505,16 +490,15 @@ impl Widget<AppState> for DrawingWidget {
                 }
                 Action::Text(affine, pos, text, color) => {
                     ctx.with_save(|ctx| {
-                        let current_affine = data.affine * *affine;
-                        ctx.render_ctx.transform(current_affine);
-                        if current_affine == Affine::FLIP_Y {
-                            ctx.transform(Affine::translate((0.0, -height)));
+                        for a in &data.affine {
+                            ctx.render_ctx.transform(*a);
+                            if a == &Affine::FLIP_Y { ctx.render_ctx.transform(Affine::translate((0.0, -height))); }
+                            if a == &Affine::FLIP_X { ctx.render_ctx.transform(Affine::translate((-width, 0.0))); }
                         }
-                        if current_affine == Affine::FLIP_X {
-                            ctx.transform(Affine::translate((-width, 0.0)));
-                        }
-                        if current_affine == Affine::FLIP_X * Affine::FLIP_Y {
-                            ctx.transform(Affine::translate((-width, -height)));
+                        for a in affine {
+                            ctx.render_ctx.transform(*a);
+                            if a == &Affine::FLIP_Y { ctx.render_ctx.transform(Affine::translate((0.0, -height))); }
+                            if a == &Affine::FLIP_X { ctx.render_ctx.transform(Affine::translate((-width, 0.0))); }
                         }
                         let mut layout = TextLayout::<String>::from_text(text.to_string());
                         layout.set_font(FontDescriptor::new(FontFamily::SYSTEM_UI).with_size(24.0));

@@ -5,8 +5,6 @@ use druid::{Data, Lens};
 use clap::Parser;
 use image::DynamicImage;
 
-
-
 /// Annotation Tools
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -35,26 +33,26 @@ impl Default for Selection {
 }
 #[derive(PartialEq, Debug, Clone)]
 pub enum Action {
-    Pen(Affine, Vec<Point>, Color, f64),
-    Highlighter(Affine, Vec<Point>, Color, f64),
-    Rectangle(Affine, Point, Point, Color, bool, f64), // Stores rectangle points and color
-    Circle(Affine, Point, f64, Color, bool, f64), // Stores circle points and color
-    Ellipse(Affine, Point, Point, Color, bool, f64), // Stores ellipse points and color
-    Arrow(Affine, Point, Point, Color, f64), // Stores arrow points and color
-    Text(Affine, Point, String, Color),  // Stores position, text, and color
+    Pen(Vec<Affine>, Vec<Point>, Color, f64),
+    Highlighter(Vec<Affine>, Vec<Point>, Color, f64),
+    Rectangle(Vec<Affine>, Point, Point, Color, bool, f64), // Stores rectangle points and color
+    Circle(Vec<Affine>, Point, f64, Color, bool, f64), // Stores circle points and color
+    Ellipse(Vec<Affine>, Point, Point, Color, bool, f64), // Stores ellipse points and color
+    Arrow(Vec<Affine>, Point, Point, Color, f64), // Stores arrow points and color
+    Text(Vec<Affine>, Point, String, Color),  // Stores position, text, and color
     Crop(DynamicImage, Point, Point),
 }
 
 impl Action {
     pub fn new(selection: &Selection) -> Self {
         match selection {
-            Selection::Pen => Self::Pen(Affine::IDENTITY, Vec::new(), Color::RED, 2.0),
-            Selection::Highlighter => Self::Highlighter(Affine::IDENTITY,Vec::new(), Color::RED, 2.0),
-            Selection::Rectangle => Self::Rectangle(Affine::IDENTITY,Point::ZERO, Point::ZERO, Color::RED, false, 2.0),
-            Selection::Circle => Self::Circle(Affine::IDENTITY,Point::ZERO, 0.0, Color::RED, false,2.0),
-            Selection::Ellipse => Self::Ellipse(Affine::IDENTITY,Point::ZERO, Point::ZERO, Color::RED, false, 2.0),
-            Selection::Arrow => Self::Arrow(Affine::IDENTITY,Point::ZERO, Point::ZERO, Color::RED, 2.0),
-            Selection::Text => Self::Text(Affine::IDENTITY,Point::ZERO, String::from("test") ,Color::RED),
+            Selection::Pen => Self::Pen(Vec::<Affine>::new(), Vec::new(), Color::RED, 2.0),
+            Selection::Highlighter => Self::Highlighter(Vec::<Affine>::new(),Vec::new(), Color::RED, 2.0),
+            Selection::Rectangle => Self::Rectangle(Vec::<Affine>::new(),Point::ZERO, Point::ZERO, Color::RED, false, 2.0),
+            Selection::Circle => Self::Circle(Vec::<Affine>::new(),Point::ZERO, 0.0, Color::RED, false,2.0),
+            Selection::Ellipse => Self::Ellipse(Vec::<Affine>::new(),Point::ZERO, Point::ZERO, Color::RED, false, 2.0),
+            Selection::Arrow => Self::Arrow(Vec::<Affine>::new(),Point::ZERO, Point::ZERO, Color::RED, 2.0),
+            Selection::Text => Self::Text(Vec::<Affine>::new(),Point::ZERO, String::from("test") ,Color::RED),
             Selection::Crop => Self::Crop(DynamicImage::default(), Point::ZERO, Point::ZERO),
         }
     }
@@ -63,7 +61,9 @@ impl Action {
 #[derive(Debug, Clone, Data, Lens)]
 pub struct AppState {
     #[data(same_fn = "PartialEq::eq")]
-    pub affine: Affine,
+    pub center: Cell<Point>,
+    #[data(same_fn = "PartialEq::eq")]
+    pub affine: Vec<Affine>,
     #[data(same_fn = "PartialEq::eq")]
     pub scale_factor: Cell<f64>,
     #[data(same_fn = "PartialEq::eq")]
@@ -96,8 +96,9 @@ pub struct AppState {
 impl AppState {
     pub fn new(image: DynamicImage, scale: f64, image_path: String, monitor: Monitor, color: Color) -> Self {
         AppState {
+            center: Cell::new(Point::ORIGIN),
             scale_factor: Cell::new(scale),
-            affine: Affine::IDENTITY,
+            affine: Vec::<Affine>::new(),
             selection: Selection::default(),
             image: ImageBuf::from_dynamic_image(image),
             actions: Vec::<Action>::new(),

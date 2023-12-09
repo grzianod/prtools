@@ -41,10 +41,9 @@ fn main() -> Result<(), PlatformError> {
         Color::RED
     );
 
-    initial_state.scale_factor.set( image_width / monitor_width + 0.5f64);
-    let window_width = image_width / initial_state.scale_factor.get();
-    let window_height = (image_height * window_width)/image_width;
-
+        initial_state.scale_factor.set(image_width / monitor_width + 0.5f64);
+        let window_width = image_width / initial_state.scale_factor.get();
+        let window_height = (image_height * window_width) / image_width;
 
     let main_window = WindowDesc::new(ui_builder())
         .title(format!("Screen Crab Tools [{}]", arg.path.to_string()))
