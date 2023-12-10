@@ -68,7 +68,8 @@ impl Widget<AppState> for DrawingWidget {
                                 key.code.eq(&Code::AltLeft) ||
                                 key.code.eq(&Code::AltRight){
                             }
-                            else if let char = key.key.to_string(){
+                            else {
+                                let char = key.key.to_string();
                                 string.push(char.chars().next().unwrap());
                             }
                         }

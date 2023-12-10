@@ -3,7 +3,6 @@ use std::process::exit;
 use druid::{Affine, Color, commands, Env};
 use crate::utils::{Action, AppState, Selection};
 use druid::RawMods;
-use druid_shell::SysMods;
 
 pub fn create_menu() -> druid::Menu<AppState> {
 
