@@ -12,6 +12,7 @@ use druid::Screen as dScreen;
 use screenshots::Screen;
 #[cfg(target_os = "windows")]
 use winapi::um::winuser::{GetSystemMetrics, SM_CYCAPTION};
+use crate::utils;
 
 fn calculate_arrowhead(start: Point, end: Point, arrowhead_length: f64, arrowhead_width: f64) -> (Point, Point) {
     let direction = (end - start).normalize();
@@ -27,18 +28,6 @@ struct TextInputState {
     text: String,
 }
 
-
-// use druid::piet::d2d::Bitmap;
-/* 
-fn convert_bitmap_to_dynamic_image(bitmap: Bitmap) -> DynamicImage {
-}
-
-// Implement the save function
-fn save_image(bitmap: Bitmap, path: &str) -> Result<(), image::ImageError> {
-    let dynamic_image = convert_bitmap_to_dynamic_image(bitmap);
-    dynamic_image.save(path)
-}
-*/
 
 pub struct DrawingWidget;
 
@@ -257,6 +246,7 @@ impl Widget<AppState> for DrawingWidget {
 
                     }
                     data.crop.set(false);
+                    data.selection = utils::Selection::Pen;
                 }
                 data.is_drawing = false;
                 data.update.set(true);
@@ -545,7 +535,7 @@ impl Widget<AppState> for DrawingWidget {
                         let border_color = Color::GRAY;
 
                         // Draw the border
-                        let border_width = 2.0;
+                        let border_width = 1.0;
                         let border_rect = Rect::from_points(*start_point, *end_point).inset(-border_width / 2.0);
                         let stroke_style = StrokeStyle::new().dash_pattern(&[2.0]);
                         ctx.stroke_styled(border_rect, &border_color, border_width, &stroke_style);
