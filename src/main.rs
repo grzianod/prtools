@@ -27,7 +27,12 @@ fn main() -> Result<(), PlatformError> {
         exit(255);
     }
 
-    let extension = std::path::Path::new(arg.path.to_string().as_str()).extension().unwrap().to_os_string().into_string().unwrap();
+    let extension = std::path::Path::new(arg.path.to_string().as_str()).extension().unwrap().to_os_string().into_string().unwrap().to_lowercase();
+
+    if !extension.eq("png") || !extension.eq("jpeg") || !extension.eq("jpg") || !extension.eq("tiff") || !extension.eq("bmp") {
+        utils::dialog_not_supported(arg.path.to_string());
+        exit(254);
+    }
 
     let monitor = Screen::get_monitors().first().unwrap().clone();
 

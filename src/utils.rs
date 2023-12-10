@@ -135,4 +135,14 @@ pub fn dialog_file_not_found(path: String) {
         .show();
 }
 
+pub fn dialog_not_supported(path: String) {
+    tauri_dialog::DialogBuilder::new()
+        .title("File Not Supported!")
+        .message(&format!("The file \"{}\" has an unsupported file format. Please try again with an image format.", Path::new(path.as_str()).file_name().unwrap().to_str().unwrap()))
+        .style(tauri_dialog::DialogStyle::Error)
+        .buttons(tauri_dialog::DialogButtons::Quit)
+        .build()
+        .show();
+}
+
 

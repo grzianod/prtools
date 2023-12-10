@@ -237,7 +237,7 @@ impl Widget<AppState> for DrawingWidget {
                             width = (width * prev_image.width() as f64) / ctx.window().get_size().width;
                             height = (height * prev_image.height() as f64) / ctx.window().get_size().height;
 
-                            if data.extension.to_lowercase().eq("png") {
+                            if data.extension.eq("png") {
                                 data.image = ImageBuf::from_dynamic_image(prev_image.crop(x.floor() as u32, y.floor() as u32, width.ceil() as u32, height.ceil() as u32));
                             }
                             else {
@@ -315,7 +315,7 @@ impl Widget<AppState> for DrawingWidget {
                 if a == &Affine::FLIP_X { ctx.render_ctx.transform(Affine::translate((-width, 0.0))); }
             }
             let image;
-            if data.extension.to_lowercase().eq("png") {
+            if data.extension.eq("png") {
                 image = ctx.render_ctx.make_image(data.image.width(), data.image.height(), data.image.raw_pixels(), ImageFormat::RgbaSeparate).unwrap();
             }
             else {
