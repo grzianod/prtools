@@ -148,7 +148,7 @@ impl Widget<AppState> for DrawingWidget {
                     }
                     Action::Crop(ref mut prev_image, ref mut start_point, ref mut end_point) => {
                         let x = ctx.window().get_position().x;
-                        let y = ctx.window().get_position().y + 24.0;
+                        let y = ctx.window().get_position().y + 28.0;
                         let width = ctx.size().width;
                         let height = ctx.size().height;
                         *prev_image = capture_image_area(Rect::new(x, y, width, height));
@@ -240,7 +240,7 @@ impl Widget<AppState> for DrawingWidget {
                             let mut x = start_point.x;
                             let mut y = start_point.y;
                             let mut width = end_point.x - x;
-                            let mut height = end_point.y - y + 24.0;
+                            let mut height = end_point.y - y + 28.0;
 
                             x = (x * prev_image.width() as f64) / ctx.window().get_size().width;
                             y = (y * prev_image.height() as f64) / ctx.window().get_size().height;
@@ -283,13 +283,6 @@ impl Widget<AppState> for DrawingWidget {
             let image_width = data.image.width() as f64;
             let image_height = data.image.height() as f64;
 
-        let (image_width, image_height) = if data.rotated {
-            (image_height, image_width)
-        }
-        else {
-            (image_width, image_height)
-        };
-
         let window_width;
         let window_height;
         if image_width > image_height {
@@ -305,7 +298,7 @@ impl Widget<AppState> for DrawingWidget {
             data.center.set(Point::new(window_width / 2f64, window_height / 2f64));
         }
 
-        ctx.window().set_size((window_width, window_height + 24.0));
+        ctx.window().set_size((window_width, window_height + 28.0));
         druid::Size::new(window_width, window_height)
         }
 
@@ -314,27 +307,17 @@ impl Widget<AppState> for DrawingWidget {
         let width;
         let height;
 
-        if data.rotated {
-            width = ctx.size().height;
-            height = ctx.size().width;
-            data.center.set(Point::new(width/2f64, height/2f64) );
-        }
-        else {
             width = ctx.size().width;
             height = ctx.size().height;
             data.center.set(Point::new(width/2f64, height/2f64) );
-        }
+
 
         ctx.with_save(|ctx| {
             for a in &data.affine {
                 ctx.render_ctx.transform(*a);
                 if a == &Affine::FLIP_Y { ctx.render_ctx.transform(Affine::translate((0.0, -height))); }
                 if a == &Affine::FLIP_X { ctx.render_ctx.transform(Affine::translate((-width, 0.0))); }
-
-                    if a == &Affine::rotate(std::f64::consts::FRAC_PI_2) { ctx.render_ctx.transform(Affine::translate((0.0, -height))); }
-                    if a == &Affine::rotate(-std::f64::consts::FRAC_PI_2) { ctx.render_ctx.transform(Affine::translate((-width, 0.0))); }
-
-                }
+            }
 
             let image = ctx.render_ctx.make_image(data.image.width(), data.image.height(), data.image.raw_pixels(), ImageFormat::RgbaSeparate).unwrap();
             ctx.render_ctx.draw_image(&image, Rect::new(0f64, 0f64, width, height), InterpolationMode::Bilinear);
@@ -572,9 +555,9 @@ impl Widget<AppState> for DrawingWidget {
 
         if data.save.get() {
             let x = ctx.window().get_position().x;
-            let y = ctx.window().get_position().y + 24.0;
+            let y = ctx.window().get_position().y + 28.0;
             let width = ctx.window().get_size().width;
-            let height = ctx.window().get_size().height - 24.0;
+            let height = ctx.window().get_size().height - 28.0;
             let image = capture_image_area(Rect::new(x,y,width, height));
             image.save(data.image_path.to_string()).unwrap();
             data.save.set(false);

@@ -92,7 +92,6 @@ pub struct AppState {
     #[data(same_fn = "PartialEq::eq")]
     pub crop: Cell<bool>,
     pub font_size: f64,
-    pub rotated: bool
 }
 
 impl AppState {
@@ -120,7 +119,6 @@ impl AppState {
             save: Cell::new(false),
             crop: Cell::new(false),
             font_size: 24f64,
-            rotated: false,
         }
     }
 }

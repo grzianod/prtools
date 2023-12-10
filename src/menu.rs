@@ -3,6 +3,7 @@ use std::process::exit;
 use druid::{Affine, Color, commands, Env};
 use crate::utils::{Action, AppState, Selection};
 use druid::RawMods;
+use druid_shell::SysMods;
 
 pub fn create_menu() -> druid::Menu<AppState> {
 
@@ -402,18 +403,6 @@ pub fn create_menu() -> druid::Menu<AppState> {
                 data.selection = Selection::Crop;
                 data.crop.set(true);
                 data.repaint = true;
-            }))
-        .entry(druid::MenuItem::new("Rotate Left ↺").hotkey(Some(RawMods::Meta), "W")
-            .on_activate(|_, data: &mut AppState, _|{
-                data.affine.push(Affine::rotate(-std::f64::consts::FRAC_PI_2));
-                data.repaint = true;
-                data.rotated = !data.rotated;
-            }))
-        .entry(druid::MenuItem::new("Rotate Right ↻").hotkey(Some(RawMods::Meta), "T")
-            .on_activate(|_, data: &mut AppState, _| {
-                data.affine.push(Affine::rotate(std::f64::consts::FRAC_PI_2));
-                data.repaint = true;
-                data.rotated = !data.rotated;
             }))
         .entry(druid::MenuItem::new("Flip Vertical ").hotkey(Some(RawMods::Meta), "X")
             .on_activate(|_, data: &mut AppState, _| {

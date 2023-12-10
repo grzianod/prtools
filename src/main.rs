@@ -4,6 +4,7 @@ mod painter;
 mod menu;
 
 use std::fs;
+use std::path::Path;
 use std::process::{exit};
 use druid::widget::{Align, Flex, Scroll};
 use druid::{AppLauncher, Color, PlatformError, Screen, Widget, WidgetExt, WindowDesc};
@@ -46,7 +47,7 @@ fn main() -> Result<(), PlatformError> {
         let window_height = (image_height * window_width) / image_width;
 
     let main_window = WindowDesc::new(ui_builder())
-        .title(format!("Screen Crab Tools [{}]", arg.path.to_string()))
+        .title(format!("Screen Crab Tools - [{}]", Path::new(arg.path.to_string().as_str()).canonicalize().unwrap().to_str().unwrap()))
         .window_size((window_width, window_height))
         .menu(|_, _, _| {
             menu::create_menu()
