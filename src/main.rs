@@ -29,7 +29,7 @@ fn main() -> Result<(), PlatformError> {
 
     let extension = std::path::Path::new(arg.path.to_string().as_str()).extension().unwrap().to_os_string().into_string().unwrap().to_lowercase();
 
-    if !extension.eq("png") || !extension.eq("jpeg") || !extension.eq("jpg") || !extension.eq("tiff") || !extension.eq("bmp") {
+    if !extension.eq("png") && !extension.eq("jpeg") && !extension.eq("jpg") && !extension.eq("tiff") && !extension.eq("bmp") {
         utils::dialog_not_supported(arg.path.to_string());
         exit(254);
     }

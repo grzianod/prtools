@@ -224,7 +224,6 @@ impl Widget<AppState> for DrawingWidget {
                         #[cfg(not(target_os = "macos"))]
                         thread::sleep(Duration::from_millis(300));
                         let image = screen.capture_area(x + dx as i32, y + dy as i32, width, height).unwrap();
-                        image.save(data.image_path.as_str()).unwrap();
                     }
                     #[cfg(target_os = "macos")] {
                             let mut x = start_point.x;
@@ -243,13 +242,28 @@ impl Widget<AppState> for DrawingWidget {
                             else {
                                 data.image = ImageBuf::from_dynamic_image_without_alpha(prev_image.crop(x.floor() as u32, y.floor() as u32, width.ceil() as u32, height.ceil() as u32));
                             }
-                                data.actions.clear();
-                            data.redo_actions.clear();
                     }
 
                     #[cfg(target_os="linux")] {
+                        let mut x = start_point.x;
+                        let mut y = start_point.y;
+                        let mut width = end_point.x - x;
+                        let mut height = end_point.y - y + 28.0;
 
+                        x = (x * prev_image.width() as f64) / ctx.window().get_size().width;
+                        y = (y * prev_image.height() as f64) / ctx.window().get_size().height;
+                        width = (width * prev_image.width() as f64) / ctx.window().get_size().width;
+                        height = (height * prev_image.height() as f64) / ctx.window().get_size().height;
+
+                        if data.extension.eq("png") {
+                            data.image = ImageBuf::from_dynamic_image(prev_image.crop(x.floor() as u32, y.floor() as u32, width.ceil() as u32, height.ceil() as u32));
+                        }
+                        else {
+                            data.image = ImageBuf::from_dynamic_image_without_alpha(prev_image.crop(x.floor() as u32, y.floor() as u32, width.ceil() as u32, height.ceil() as u32));
+                        }
                     }
+                    data.actions.clear();
+                    data.redo_actions.clear();
                     data.crop.set(false);
                     data.selection = utils::Selection::Pen;
                 }

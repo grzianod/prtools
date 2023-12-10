@@ -27,7 +27,7 @@ winapi = { version = "0.3.9", features = ["winuser", "winreg"] }
 
 [package.metadata.bundle]
 name = "Screen Crab Tools"
-identifier = "com.screencrab.tools"
+identifier = "com.screencrab"
 icon = ["icons/Square*.png"]
 version = "0.1.0"
 category = "Utility"
