@@ -237,8 +237,13 @@ impl Widget<AppState> for DrawingWidget {
                             width = (width * prev_image.width() as f64) / ctx.window().get_size().width;
                             height = (height * prev_image.height() as f64) / ctx.window().get_size().height;
 
-                            data.image = ImageBuf::from_dynamic_image(prev_image.crop(x.floor() as u32, y.floor() as u32, width.ceil() as u32, height.ceil() as u32));
-                            data.actions.clear();
+                            if data.extension.to_lowercase().eq("png") {
+                                data.image = ImageBuf::from_dynamic_image(prev_image.crop(x.floor() as u32, y.floor() as u32, width.ceil() as u32, height.ceil() as u32));
+                            }
+                            else {
+                                data.image = ImageBuf::from_dynamic_image_without_alpha(prev_image.crop(x.floor() as u32, y.floor() as u32, width.ceil() as u32, height.ceil() as u32));
+                            }
+                                data.actions.clear();
                             data.redo_actions.clear();
                     }
 
@@ -309,9 +314,14 @@ impl Widget<AppState> for DrawingWidget {
                 if a == &Affine::FLIP_Y { ctx.render_ctx.transform(Affine::translate((0.0, -height))); }
                 if a == &Affine::FLIP_X { ctx.render_ctx.transform(Affine::translate((-width, 0.0))); }
             }
-
-            let image = ctx.render_ctx.make_image(data.image.width(), data.image.height(), data.image.raw_pixels(), ImageFormat::RgbaSeparate).unwrap();
-            ctx.render_ctx.draw_image(&image, Rect::new(0f64, 0f64, width, height), InterpolationMode::Bilinear);
+            let image;
+            if data.extension.to_lowercase().eq("png") {
+                image = ctx.render_ctx.make_image(data.image.width(), data.image.height(), data.image.raw_pixels(), ImageFormat::RgbaSeparate).unwrap();
+            }
+            else {
+                image = ctx.render_ctx.make_image(data.image.width(), data.image.height(), data.image.raw_pixels(), ImageFormat::Rgb).unwrap();
+            }
+                ctx.render_ctx.draw_image(&image, Rect::new(0f64, 0f64, width, height), InterpolationMode::Bilinear);
         });
 
         for action in &data.actions {

@@ -69,6 +69,7 @@ pub struct AppState {
     #[data(same_fn = "PartialEq::eq")]
     pub selection: Selection,
     pub image: ImageBuf,
+    pub extension: String,
     #[data(same_fn = "PartialEq::eq")]
     pub actions: Vec<Action>,
     #[data(same_fn = "PartialEq::eq")]
@@ -95,8 +96,9 @@ pub struct AppState {
 }
 
 impl AppState {
-    pub fn new(image: DynamicImage, scale: f64, image_path: String, monitor: Monitor, color: Color) -> Self {
+    pub fn new(image: DynamicImage, extension: String, scale: f64, image_path: String, monitor: Monitor, color: Color) -> Self {
         AppState {
+            extension,
             center: Cell::new(Point::ORIGIN),
             scale_factor: Cell::new(scale),
             affine: Vec::<Affine>::new(),

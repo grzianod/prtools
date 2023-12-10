@@ -20,11 +20,14 @@ fn ui_builder() -> impl Widget<AppState> {
 
 fn main() -> Result<(), PlatformError> {
     let arg = utils::Args::parse();
+
     //check if the file exists
     if let Err(_) = fs::metadata(arg.path.to_string()) {
         utils::dialog_file_not_found(arg.path.to_string());
         exit(255);
     }
+
+    let extension = std::path::Path::new(arg.path.to_string().as_str()).extension().unwrap().to_os_string().into_string().unwrap();
 
     let monitor = Screen::get_monitors().first().unwrap().clone();
 
@@ -36,6 +39,7 @@ fn main() -> Result<(), PlatformError> {
 
     let initial_state = AppState::new(
         image,
+        extension,
         1f64,
         arg.path.to_string(),
         monitor,
