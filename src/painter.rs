@@ -10,8 +10,6 @@ use image::{GenericImageView, DynamicImage};
 use num_traits::cast::FromPrimitive;
 use druid::Screen as dScreen;
 use screenshots::Screen;
-#[cfg(target_os = "windows")]
-use winapi::um::winuser::{GetSystemMetrics, SM_CYCAPTION};
 use crate::utils;
 
 fn calculate_arrowhead(start: Point, end: Point, arrowhead_length: f64, arrowhead_width: f64) -> (Point, Point) {
@@ -138,9 +136,11 @@ impl Widget<AppState> for DrawingWidget {
                     }
                     Action::Crop(ref mut prev_image, ref mut start_point, ref mut end_point) => {
                         let x = ctx.window().get_position().x;
-                        let y = ctx.window().get_position().y + 28.0;
+                        let y = ctx.window().get_position().y + data.title_bar_height ;
                         let width = ctx.size().width;
                         let height = ctx.size().height;
+                        #[cfg(not(target_os = "macos"))]
+                        std::thread::sleep(std::time::Duration::from_millis(300));
                         *prev_image = capture_image_area(Rect::new(x, y, width, height));
                         *start_point = e.pos;
                         *end_point = e.pos;
@@ -213,23 +213,10 @@ impl Widget<AppState> for DrawingWidget {
                 }
                 if let Some(Action::Crop(prev_image, start_point, end_point)) = data.actions.last_mut() {
                     *end_point = e.pos;
-                    #[cfg(target_os = "windows")] {
-                        let dx = ctx.to_window(Point::new(0f64, 0f64)).x as u32;
-                        let dy = ctx.to_window(Point::new(0f64, 0f64)).y as u32;
-                        let x = ctx.window().get_position().x as i32;
-                        let y = ctx.window().get_position().y as i32;
-                        let width = ctx.window().get_size().width as u32;
-                        let height = ctx.window().get_size().height as u32;
-                        let title_bar_height = unsafe { GetSystemMetrics(SM_CYCAPTION) } as u32;
-                        #[cfg(not(target_os = "macos"))]
-                        thread::sleep(Duration::from_millis(300));
-                        let image = screen.capture_area(x + dx as i32, y + dy as i32, width, height).unwrap();
-                    }
-                    #[cfg(target_os = "macos")] {
-                            let mut x = start_point.x;
+                    let mut x = start_point.x;
                             let mut y = start_point.y;
                             let mut width = end_point.x - x;
-                            let mut height = end_point.y - y + 28.0;
+                            let mut height = end_point.y - y + data.title_bar_height;
 
                             x = (x * prev_image.width() as f64) / ctx.window().get_size().width;
                             y = (y * prev_image.height() as f64) / ctx.window().get_size().height;
@@ -242,26 +229,6 @@ impl Widget<AppState> for DrawingWidget {
                             else {
                                 data.image = ImageBuf::from_dynamic_image_without_alpha(prev_image.crop(x.floor() as u32, y.floor() as u32, width.ceil() as u32, height.ceil() as u32));
                             }
-                    }
-
-                    #[cfg(target_os="linux")] {
-                        let mut x = start_point.x;
-                        let mut y = start_point.y;
-                        let mut width = end_point.x - x;
-                        let mut height = end_point.y - y + 28.0;
-
-                        x = (x * prev_image.width() as f64) / ctx.window().get_size().width;
-                        y = (y * prev_image.height() as f64) / ctx.window().get_size().height;
-                        width = (width * prev_image.width() as f64) / ctx.window().get_size().width;
-                        height = (height * prev_image.height() as f64) / ctx.window().get_size().height;
-
-                        if data.extension.eq("png") {
-                            data.image = ImageBuf::from_dynamic_image(prev_image.crop(x.floor() as u32, y.floor() as u32, width.ceil() as u32, height.ceil() as u32));
-                        }
-                        else {
-                            data.image = ImageBuf::from_dynamic_image_without_alpha(prev_image.crop(x.floor() as u32, y.floor() as u32, width.ceil() as u32, height.ceil() as u32));
-                        }
-                    }
                     data.actions.clear();
                     data.redo_actions.clear();
                     data.crop.set(false);
@@ -308,7 +275,7 @@ impl Widget<AppState> for DrawingWidget {
             data.center.set(Point::new(window_width / 2f64, window_height / 2f64));
         }
 
-        ctx.window().set_size((window_width, window_height + 28.0));
+        ctx.window().set_size((window_width, window_height + data.title_bar_height));
         druid::Size::new(window_width, window_height)
         }
 
@@ -570,9 +537,11 @@ impl Widget<AppState> for DrawingWidget {
 
         if data.save.get() {
             let x = ctx.window().get_position().x;
-            let y = ctx.window().get_position().y + 28.0;
+            let y = ctx.window().get_position().y + data.title_bar_height;
             let width = ctx.window().get_size().width;
-            let height = ctx.window().get_size().height - 28.0;
+            let height = ctx.window().get_size().height - data.title_bar_height;
+            #[cfg(not(target_os = "macos"))]
+            std::thread::sleep(std::time::Duration::from_millis(300));
             let image = capture_image_area(Rect::new(x,y,width, height));
             image.save(data.image_path.to_string()).unwrap();
             data.save.set(false);

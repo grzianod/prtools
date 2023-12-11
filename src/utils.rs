@@ -4,6 +4,10 @@ use druid::{Affine, Color, ImageBuf, Monitor, Point};
 use druid::{Data, Lens};
 use clap::Parser;
 use image::DynamicImage;
+#[cfg(target_os="windows")]
+use winapi::um::winuser::GetSystemMetrics;
+#[cfg(target_os="windows")]
+use winapi::um::winuser::SM_CYCAPTION;
 
 /// Annotation Tools
 #[derive(Parser, Debug)]
@@ -93,11 +97,17 @@ pub struct AppState {
     #[data(same_fn = "PartialEq::eq")]
     pub crop: Cell<bool>,
     pub font_size: f64,
+    pub title_bar_height: f64,
 }
 
 impl AppState {
     pub fn new(image: DynamicImage, extension: String, scale: f64, image_path: String, monitor: Monitor, color: Color) -> Self {
+        let mut title_bar_height;
+        #[cfg(target_os = "windows")] { title_bar_height = unsafe { GetSystemMetrics(SM_CYCAPTION) } as f64 + 35.0; }
+        #[cfg(target_os = "macos")] { title_bar_height = 28.0; }
+        #[cfg(target_os = "linux")] { title_bar_height = 30.0; }
         AppState {
+            title_bar_height: title_bar_height, 
             extension,
             center: Cell::new(Point::ORIGIN),
             scale_factor: Cell::new(scale),
