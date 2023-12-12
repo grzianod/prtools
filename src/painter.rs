@@ -135,7 +135,7 @@ impl Widget<AppState> for DrawingWidget {
                     }
                     Action::Crop(ref mut prev_image, ref mut start_point, ref mut end_point) => {
                         let x = ctx.window().get_position().x;
-                        let y = ctx.window().get_position().y + data.title_bar_height;
+                        let y = ctx.window().get_position().y + 5.0;
                         let width = ctx.size().width;
                         let height = ctx.size().height;
                         #[cfg(not(target_os = "macos"))]
@@ -214,9 +214,9 @@ impl Widget<AppState> for DrawingWidget {
                 if let Some(Action::Crop(prev_image, start_point, end_point)) = data.actions.last_mut() {
                     *end_point = e.pos;
                     let mut x = start_point.x;
-                    let mut y = start_point.y - data.title_bar_height;
+                    let mut y = start_point.y;
                     let mut width = end_point.x - x;
-                    let mut height = end_point.y - y - data.title_bar_height/2.0;
+                    let mut height = end_point.y - y;
 
                     x = (x * prev_image.width() as f64) / ctx.window().get_size().width;
                     y = (y * prev_image.height() as f64) / ctx.window().get_size().height;
@@ -532,9 +532,9 @@ impl Widget<AppState> for DrawingWidget {
 
         if data.save.get() {
             let x = ctx.window().get_position().x;
-            let y = ctx.window().get_position().y + data.title_bar_height;
-            let width = ctx.window().get_size().width;
-            let height = ctx.window().get_size().height - data.title_bar_height;
+            let y = ctx.window().get_position().y - 3.0;
+            let width = ctx.size().width;
+            let height = ctx.size().height -3.0;
             #[cfg(not(target_os = "macos"))]
             std::thread::sleep(std::time::Duration::from_millis(300));
             let image = capture_image_area(Rect::new(x, y, width, height));
@@ -547,5 +547,5 @@ impl Widget<AppState> for DrawingWidget {
 fn capture_image_area(rect: Rect) -> DynamicImage {
     let screens = Screen::all().unwrap();
     let screen = screens.iter().map(|screen| { (screen, num_traits::abs(rect.x0 - screen.display_info.x as f64) as i32) }).min_by_key(|screen| { screen.1 }).unwrap().0;
-    return DynamicImage::ImageRgba8(screen.capture_area(num_traits::abs(rect.x0 - screen.display_info.x as f64) as i32 + 5, num_traits::abs(rect.y0 - screen.display_info.y as f64) as i32 + 7, rect.x1.ceil() as u32, rect.y1.ceil() as u32).unwrap());
+    return DynamicImage::ImageRgba8(screen.capture_area(num_traits::abs(rect.x0 - screen.display_info.x as f64) as i32, num_traits::abs(rect.y0 - screen.display_info.y as f64) as i32, rect.x1.ceil() as u32, rect.y1.ceil() as u32).unwrap());
 }
