@@ -214,16 +214,16 @@ impl Widget<AppState> for DrawingWidget {
                 if let Some(Action::Crop(prev_image, start_point, end_point)) = data.actions.last_mut() {
                     *end_point = e.pos;
                     let mut x = start_point.x;
-                    let mut y = start_point.y;
+                    let mut y = start_point.y - data.title_bar_height;
                     let mut width = end_point.x - x;
-                    let mut height = end_point.y - y + data.title_bar_height;
+                    let mut height = end_point.y - y - data.title_bar_height/2.0;
 
                     x = (x * prev_image.width() as f64) / ctx.window().get_size().width;
                     y = (y * prev_image.height() as f64) / ctx.window().get_size().height;
                     width = (width * prev_image.width() as f64) / ctx.window().get_size().width;
                     height = (height * prev_image.height() as f64) / ctx.window().get_size().height;
 
-                    if data.extension.eq("png") {
+                    if data.extension.eq("png") || data.extension.eq("tiff") || data.extension.eq("bmp") {
                         data.image = ImageBuf::from_dynamic_image(prev_image.crop(x.floor() as u32, y.floor() as u32, width.ceil() as u32, height.ceil() as u32));
                     } else {
                         data.image = ImageBuf::from_dynamic_image_without_alpha(prev_image.crop(x.floor() as u32, y.floor() as u32, width.ceil() as u32, height.ceil() as u32));
@@ -293,7 +293,7 @@ impl Widget<AppState> for DrawingWidget {
                 if a == &Affine::FLIP_X { ctx.render_ctx.transform(Affine::translate((-width, 0.0))); }
             }
             let image;
-            if data.extension.eq("png") {
+            if data.extension.eq("png") || data.extension.eq("tiff") || data.extension.eq("bmp") {
                 image = ctx.render_ctx.make_image(data.image.width(), data.image.height(), data.image.raw_pixels(), ImageFormat::RgbaSeparate).unwrap();
             } else {
                 image = ctx.render_ctx.make_image(data.image.width(), data.image.height(), data.image.raw_pixels(), ImageFormat::Rgb).unwrap();
