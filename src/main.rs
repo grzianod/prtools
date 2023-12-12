@@ -42,8 +42,14 @@ fn main() -> Result<(), PlatformError> {
     let image_width = image.width() as f64;
     let image_height = image.height() as f64;
 
+    let mut title_bar_height;
+    #[cfg(target_os = "windows")] { title_bar_height = unsafe { GetSystemMetrics(SM_CYCAPTION) } as f64 + 18.0;}
+    #[cfg(target_os = "macos")] { title_bar_height = 30.0; }
+    #[cfg(target_os = "linux")] { title_bar_height = 30.0; }
+
     let initial_state = AppState::new(
         image,
+        title_bar_height,
         extension,
         1f64,
         arg.path.to_string(),
@@ -53,7 +59,7 @@ fn main() -> Result<(), PlatformError> {
 
         initial_state.scale_factor.set(image_width / monitor_width + 0.5f64);
         let window_width = image_width / initial_state.scale_factor.get();
-        let window_height = (image_height * window_width) / image_width;
+        let window_height = (image_height * window_width) / image_width - title_bar_height;
 
     let main_window = WindowDesc::new(ui_builder())
         .title(format!("Screen Crab Tools - [{}]", Path::new(arg.path.to_string().as_str()).canonicalize().unwrap().to_str().unwrap()))

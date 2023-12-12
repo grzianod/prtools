@@ -8,6 +8,7 @@ use image::DynamicImage;
 use winapi::um::winuser::GetSystemMetrics;
 #[cfg(target_os="windows")]
 use winapi::um::winuser::SM_CYCAPTION;
+use crate::utils::app_state_derived_lenses::title_bar_height;
 
 /// Annotation Tools
 #[derive(Parser, Debug)]
@@ -101,13 +102,10 @@ pub struct AppState {
 }
 
 impl AppState {
-    pub fn new(image: DynamicImage, extension: String, scale: f64, image_path: String, monitor: Monitor, color: Color) -> Self {
-        let mut title_bar_height;
-        #[cfg(target_os = "windows")] { title_bar_height = unsafe { GetSystemMetrics(SM_CYCAPTION) } as f64 + 18.0; println!("{}", title_bar_height);}
-        #[cfg(target_os = "macos")] { title_bar_height = 28.0; }
-        #[cfg(target_os = "linux")] { title_bar_height = 30.0; }
+    pub fn new(image: DynamicImage, height: f64, extension: String, scale: f64, image_path: String, monitor: Monitor, color: Color) -> Self {
+
         AppState {
-            title_bar_height: title_bar_height, 
+            title_bar_height: height,
             extension,
             center: Cell::new(Point::ORIGIN),
             scale_factor: Cell::new(scale),

@@ -1,3 +1,4 @@
+use std::ops::Index;
 use crate::utils::{AppState, Action};
 use druid::{Cursor, Rect, Widget, Code, TextLayout, ImageBuf, Affine, FontDescriptor, FontFamily};
 use druid::RenderContext;
@@ -9,6 +10,7 @@ use druid::Event;
 use image::{GenericImageView, DynamicImage};
 use num_traits::cast::FromPrimitive;
 use druid::Screen as dScreen;
+use image::DynamicImage::ImageRgb8;
 use screenshots::Screen;
 use crate::utils;
 
@@ -409,7 +411,7 @@ impl Widget<AppState> for DrawingWidget {
                         });
                         }
                 }
-                Action::Circle(affine, center, radius, _, fill, stroke) => {
+                Action::Circle(affine, center, radius, color, fill, stroke) => {
                     if *fill {
                         ctx.with_save(|ctx| {
                             for a in &data.affine {
@@ -422,7 +424,7 @@ impl Widget<AppState> for DrawingWidget {
                                 if a == &Affine::FLIP_Y { ctx.render_ctx.transform(Affine::translate((0.0, -height))); }
                                 if a == &Affine::FLIP_X { ctx.render_ctx.transform(Affine::translate((-width, 0.0))); }
                             }
-                            ctx.render_ctx.fill_even_odd(Circle::new(*center, *radius), &data.color);
+                            ctx.render_ctx.fill_even_odd(Circle::new(*center, *radius), color);
                         });
                         } else {
                         ctx.with_save(|ctx| {
@@ -436,7 +438,7 @@ impl Widget<AppState> for DrawingWidget {
                                 if a == &Affine::FLIP_Y { ctx.render_ctx.transform(Affine::translate((0.0, -height))); }
                                 if a == &Affine::FLIP_X { ctx.render_ctx.transform(Affine::translate((-width, 0.0))); }
                             }
-                            ctx.render_ctx.stroke(Circle::new(*center, *radius), &data.color, *stroke);
+                            ctx.render_ctx.stroke(Circle::new(*center, *radius), color, *stroke);
                         });
                         }
                 }
@@ -551,6 +553,6 @@ impl Widget<AppState> for DrawingWidget {
 
 fn capture_image_area(rect: Rect) -> DynamicImage {
     let screens = Screen::all().unwrap();
-    let screen = screens.first().unwrap();
-    DynamicImage::ImageRgba8(screen.capture_area(rect.x0 as i32, rect.y0 as i32, rect.x1 as u32, rect.y1 as u32).unwrap())
+    let screen = screens.iter().map(|screen| { (screen, num_traits::abs(rect.x0-screen.display_info.x as f64) as i32) }).min_by_key(|screen| { screen.1 }).unwrap().0;
+    return DynamicImage::ImageRgba8(screen.capture_area(num_traits::abs(rect.x0-screen.display_info.x as f64) as i32, num_traits::abs(rect.y0 - screen.display_info.y as f64) as i32, rect.x1.ceil() as u32, rect.y1.ceil() as u32).unwrap());
 }
