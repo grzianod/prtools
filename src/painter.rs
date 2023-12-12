@@ -44,20 +44,17 @@ impl Widget<AppState> for DrawingWidget {
                     if let Some(action) = data.actions.last_mut() {
                         if let Action::Text(affine, _, string, _, _) = action {
                             *affine = data.affine.clone();
-                            if key.code.eq(&Code::Backspace){
+                            if key.code.eq(&Code::Backspace) {
                                 if !string.is_empty() {
                                     string.pop();
                                 }
-                            }
-                            else if key.code.eq(&Code::ShiftLeft)||
+                            } else if key.code.eq(&Code::ShiftLeft) ||
                                 key.code.eq(&Code::ShiftRight) ||
                                 key.code.eq(&Code::Tab) ||
                                 key.code.eq(&Code::MetaLeft) ||
                                 key.code.eq(&Code::MetaRight) ||
                                 key.code.eq(&Code::AltLeft) ||
-                                key.code.eq(&Code::AltRight){
-                            }
-                            else {
+                                key.code.eq(&Code::AltRight) {} else {
                                 let char = key.key.to_string();
                                 string.push(char.chars().next().unwrap());
                             }
@@ -138,11 +135,12 @@ impl Widget<AppState> for DrawingWidget {
                     }
                     Action::Crop(ref mut prev_image, ref mut start_point, ref mut end_point) => {
                         let x = ctx.window().get_position().x;
-                        let y = ctx.window().get_position().y + data.title_bar_height ;
+                        let y = ctx.window().get_position().y + data.title_bar_height;
                         let width = ctx.size().width;
                         let height = ctx.size().height;
                         #[cfg(not(target_os = "macos"))]
                         std::thread::sleep(std::time::Duration::from_millis(300));
+                        ctx.set_active(true);
                         *prev_image = capture_image_area(Rect::new(x, y, width, height));
                         *start_point = e.pos;
                         *end_point = e.pos;
@@ -216,21 +214,20 @@ impl Widget<AppState> for DrawingWidget {
                 if let Some(Action::Crop(prev_image, start_point, end_point)) = data.actions.last_mut() {
                     *end_point = e.pos;
                     let mut x = start_point.x;
-                            let mut y = start_point.y;
-                            let mut width = end_point.x - x;
-                            let mut height = end_point.y - y + data.title_bar_height;
+                    let mut y = start_point.y;
+                    let mut width = end_point.x - x;
+                    let mut height = end_point.y - y + data.title_bar_height;
 
-                            x = (x * prev_image.width() as f64) / ctx.window().get_size().width;
-                            y = (y * prev_image.height() as f64) / ctx.window().get_size().height;
-                            width = (width * prev_image.width() as f64) / ctx.window().get_size().width;
-                            height = (height * prev_image.height() as f64) / ctx.window().get_size().height;
+                    x = (x * prev_image.width() as f64) / ctx.window().get_size().width;
+                    y = (y * prev_image.height() as f64) / ctx.window().get_size().height;
+                    width = (width * prev_image.width() as f64) / ctx.window().get_size().width;
+                    height = (height * prev_image.height() as f64) / ctx.window().get_size().height;
 
-                            if data.extension.eq("png") {
-                                data.image = ImageBuf::from_dynamic_image(prev_image.crop(x.floor() as u32, y.floor() as u32, width.ceil() as u32, height.ceil() as u32));
-                            }
-                            else {
-                                data.image = ImageBuf::from_dynamic_image_without_alpha(prev_image.crop(x.floor() as u32, y.floor() as u32, width.ceil() as u32, height.ceil() as u32));
-                            }
+                    if data.extension.eq("png") {
+                        data.image = ImageBuf::from_dynamic_image(prev_image.crop(x.floor() as u32, y.floor() as u32, width.ceil() as u32, height.ceil() as u32));
+                    } else {
+                        data.image = ImageBuf::from_dynamic_image_without_alpha(prev_image.crop(x.floor() as u32, y.floor() as u32, width.ceil() as u32, height.ceil() as u32));
+                    }
                     data.actions.clear();
                     data.redo_actions.clear();
                     data.crop.set(false);
@@ -259,8 +256,8 @@ impl Widget<AppState> for DrawingWidget {
         let monitor_width = monitor.virtual_work_rect().width();
         let monitor_height = monitor.virtual_work_rect().height();
 
-            let image_width = data.image.width() as f64;
-            let image_height = data.image.height() as f64;
+        let image_width = data.image.width() as f64;
+        let image_height = data.image.height() as f64;
 
         let window_width;
         let window_height;
@@ -269,26 +266,24 @@ impl Widget<AppState> for DrawingWidget {
             window_width = image_width / data.scale_factor.get();
             window_height = (image_height * window_width) / image_width;
             data.center.set(Point::new(window_width / 2f64, window_height / 2f64));
-        }
-        else {
-            data.scale_factor.set(image_height/monitor_height + 0.5f64);
+        } else {
+            data.scale_factor.set(image_height / monitor_height + 0.5f64);
             window_height = image_height / data.scale_factor.get();
-            window_width = (image_width * window_height)/ image_height;
+            window_width = (image_width * window_height) / image_height;
             data.center.set(Point::new(window_width / 2f64, window_height / 2f64));
         }
 
         ctx.window().set_size((window_width, window_height + data.title_bar_height));
         druid::Size::new(window_width, window_height)
-        }
+    }
 
     fn paint(&mut self, ctx: &mut druid::PaintCtx, data: &AppState, env: &Env) {
-
         let width;
         let height;
 
-            width = ctx.size().width;
-            height = ctx.size().height;
-            data.center.set(Point::new(width/2f64, height/2f64) );
+        width = ctx.size().width;
+        height = ctx.size().height;
+        data.center.set(Point::new(width / 2f64, height / 2f64));
 
 
         ctx.with_save(|ctx| {
@@ -300,11 +295,10 @@ impl Widget<AppState> for DrawingWidget {
             let image;
             if data.extension.eq("png") {
                 image = ctx.render_ctx.make_image(data.image.width(), data.image.height(), data.image.raw_pixels(), ImageFormat::RgbaSeparate).unwrap();
-            }
-            else {
+            } else {
                 image = ctx.render_ctx.make_image(data.image.width(), data.image.height(), data.image.raw_pixels(), ImageFormat::Rgb).unwrap();
             }
-                ctx.render_ctx.draw_image(&image, Rect::new(0f64, 0f64, width, height), InterpolationMode::Bilinear);
+            ctx.render_ctx.draw_image(&image, Rect::new(0f64, 0f64, width, height), InterpolationMode::Bilinear);
         });
 
         for action in &data.actions {
@@ -324,7 +318,6 @@ impl Widget<AppState> for DrawingWidget {
                             }
                             ctx.render_ctx.fill(Circle::new(*action.last().unwrap(), stroke * 2f64), &color.with_alpha(0.25));
                         });
-
                     }
                     for pair in action.windows(2) {
                         if let [start, end] = pair {
@@ -395,7 +388,7 @@ impl Widget<AppState> for DrawingWidget {
                             }
                             ctx.render_ctx.fill_even_odd(Rect::new(start_point.x, start_point.y, end_point.x, end_point.y), color);
                         });
-                        } else {
+                    } else {
                         ctx.with_save(|ctx| {
                             for a in &data.affine {
                                 ctx.render_ctx.transform(*a);
@@ -409,7 +402,7 @@ impl Widget<AppState> for DrawingWidget {
                             }
                             ctx.render_ctx.stroke(Rect::new(start_point.x, start_point.y, end_point.x, end_point.y), color, *stroke);
                         });
-                        }
+                    }
                 }
                 Action::Circle(affine, center, radius, color, fill, stroke) => {
                     if *fill {
@@ -426,7 +419,7 @@ impl Widget<AppState> for DrawingWidget {
                             }
                             ctx.render_ctx.fill_even_odd(Circle::new(*center, *radius), color);
                         });
-                        } else {
+                    } else {
                         ctx.with_save(|ctx| {
                             for a in &data.affine {
                                 ctx.render_ctx.transform(*a);
@@ -440,7 +433,7 @@ impl Widget<AppState> for DrawingWidget {
                             }
                             ctx.render_ctx.stroke(Circle::new(*center, *radius), color, *stroke);
                         });
-                        }
+                    }
                 }
                 Action::Ellipse(affine, start_point, end_point, color, fill, stroke) => {
                     if *fill {
@@ -457,7 +450,7 @@ impl Widget<AppState> for DrawingWidget {
                             }
                             ctx.render_ctx.fill_even_odd(Ellipse::from_rect(Rect::new(start_point.x, start_point.y, end_point.x, end_point.y)), color);
                         });
-                        } else {
+                    } else {
                         ctx.with_save(|ctx| {
                             for a in &data.affine {
                                 ctx.render_ctx.transform(*a);
@@ -471,7 +464,7 @@ impl Widget<AppState> for DrawingWidget {
                             }
                             ctx.render_ctx.stroke(Ellipse::from_rect(Rect::new(start_point.x, start_point.y, end_point.x, end_point.y)), color, *stroke);
                         });
-                        }
+                    }
                 }
                 Action::Arrow(affine, start_point, end_point, color, stroke) => {
                     ctx.with_save(|ctx| {
@@ -544,7 +537,7 @@ impl Widget<AppState> for DrawingWidget {
             let height = ctx.window().get_size().height - data.title_bar_height;
             #[cfg(not(target_os = "macos"))]
             std::thread::sleep(std::time::Duration::from_millis(300));
-            let image = capture_image_area(Rect::new(x,y,width, height));
+            let image = capture_image_area(Rect::new(x, y, width, height));
             image.save(data.image_path.to_string()).unwrap();
             data.save.set(false);
         }
@@ -553,6 +546,6 @@ impl Widget<AppState> for DrawingWidget {
 
 fn capture_image_area(rect: Rect) -> DynamicImage {
     let screens = Screen::all().unwrap();
-    let screen = screens.iter().map(|screen| { (screen, num_traits::abs(rect.x0-screen.display_info.x as f64) as i32) }).min_by_key(|screen| { screen.1 }).unwrap().0;
-    return DynamicImage::ImageRgba8(screen.capture_area(num_traits::abs(rect.x0-screen.display_info.x as f64) as i32, num_traits::abs(rect.y0 - screen.display_info.y as f64) as i32, rect.x1.ceil() as u32, rect.y1.ceil() as u32).unwrap());
+    let screen = screens.iter().map(|screen| { (screen, num_traits::abs(rect.x0 - screen.display_info.x as f64) as i32) }).min_by_key(|screen| { screen.1 }).unwrap().0;
+    return DynamicImage::ImageRgba8(screen.capture_area(num_traits::abs(rect.x0 - screen.display_info.x as f64) as i32 + 5, num_traits::abs(rect.y0 - screen.display_info.y as f64) as i32 + 7, rect.x1.ceil() as u32, rect.y1.ceil() as u32).unwrap());
 }
