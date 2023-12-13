@@ -134,11 +134,11 @@ impl Widget<AppState> for DrawingWidget {
                     }
                     Action::Crop(ref mut prev_image, ref mut start_point, ref mut end_point) => {
 
-                        let mut x = ctx.window().get_position().x.floor();
-                        let mut y = ctx.window().get_position().y.floor() + data.title_bar_height;
+                        let x = ctx.window().get_position().x.floor();
+                        let y = ctx.window().get_position().y.floor() + data.title_bar_height;
 
-                        let mut width = ctx.size().width.ceil();
-                        let mut height = ctx.size().height.ceil();
+                        let width = ctx.size().width.ceil();
+                        let height = ctx.size().height.ceil();
 
                         #[cfg(not(target_os = "macos"))]
                         std::thread::sleep(std::time::Duration::from_millis(300));
