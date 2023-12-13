@@ -46,7 +46,7 @@ fn main() -> Result<(), PlatformError> {
     let mut title_bar_height;
     #[cfg(target_os = "windows")] { title_bar_height = 11.11/100f64 * monitor_height;}
     #[cfg(target_os = "macos")] { title_bar_height = 3.11/100f64 * monitor_height; }
-    #[cfg(target_os = "linux")] { title_bar_height = 10f64/100f64 * monitor_height; }
+    #[cfg(target_os = "linux")] { title_bar_height = 5f64/100f64 * monitor_height; }
 
     let initial_state = AppState::new(
         image,
