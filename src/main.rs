@@ -39,13 +39,14 @@ fn main() -> Result<(), PlatformError> {
     let image = image::io::Reader::open(arg.path.to_string()).unwrap().with_guessed_format().unwrap().decode().unwrap();
 
     let monitor_width = monitor.virtual_work_rect().width();
+    let monitor_height = monitor.virtual_rect().height();
     let image_width = image.width() as f64;
     let image_height = image.height() as f64;
 
     let mut title_bar_height;
-    #[cfg(target_os = "windows")] { title_bar_height = unsafe { GetSystemMetrics(SM_CYCAPTION) } as f64 + 18.0;}
-    #[cfg(target_os = "macos")] { title_bar_height = 28.0; }
-    #[cfg(target_os = "linux")] { title_bar_height = 100.0; }
+    #[cfg(target_os = "windows")] { title_bar_height = 11.11/100f64 * monitor_height;}
+    #[cfg(target_os = "macos")] { title_bar_height = 3.11/100f64 * monitor_height; }
+    #[cfg(target_os = "linux")] { title_bar_height = 11.11/100f64 * monitor_height; }
 
     let initial_state = AppState::new(
         image,
