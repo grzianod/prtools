@@ -40,7 +40,6 @@ fn main() -> Result<(), PlatformError> {
     let monitor_width = monitor.virtual_work_rect().width();
     let monitor_height = monitor.virtual_rect().height();
     let image_width = image.width() as f64;
-    let image_height = image.height() as f64;
 
     let title_bar_height;
     #[cfg(target_os = "windows")] { title_bar_height = 11.11f64/100f64 * monitor_height;}
@@ -58,7 +57,6 @@ fn main() -> Result<(), PlatformError> {
     );
 
         initial_state.scale_factor.set(image_width / monitor_width + 0.5f64);
-        let window_width = image_width / initial_state.scale_factor.get();
 
     let main_window = WindowDesc::new(ui_builder())
         .title(format!("Screen Crab Tools - [{}]", Path::new(arg.path.to_string().as_str()).canonicalize().unwrap().to_str().unwrap()))
