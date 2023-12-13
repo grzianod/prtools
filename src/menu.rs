@@ -1,6 +1,8 @@
 use std::fs;
 use std::process::exit;
-use druid::{Affine, Color, commands, Env};
+#[cfg(target_os = "macos")]
+use druid::commands;
+use druid::{Affine, Color, Env};
 use crate::utils::{Action, AppState, Selection};
 use druid::RawMods;
 

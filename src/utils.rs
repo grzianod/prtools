@@ -8,7 +8,6 @@ use image::DynamicImage;
 use winapi::um::winuser::GetSystemMetrics;
 #[cfg(target_os="windows")]
 use winapi::um::winuser::SM_CYCAPTION;
-use crate::utils::app_state_derived_lenses::title_bar_height;
 
 /// Annotation Tools
 #[derive(Parser, Debug)]
