@@ -45,7 +45,7 @@ fn main() -> Result<(), PlatformError> {
     let mut title_bar_height;
     #[cfg(target_os = "windows")] { title_bar_height = unsafe { GetSystemMetrics(SM_CYCAPTION) } as f64 + 18.0;}
     #[cfg(target_os = "macos")] { title_bar_height = 28.0; }
-    #[cfg(target_os = "linux")] { title_bar_height = 30.0; }
+    #[cfg(target_os = "linux")] { title_bar_height = 100.0; }
 
     let initial_state = AppState::new(
         image,
