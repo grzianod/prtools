@@ -63,7 +63,6 @@ fn main() -> Result<(), PlatformError> {
 
     let main_window = WindowDesc::new(ui_builder())
         .title(format!("Screen Crab Tools - [{}]", Path::new(arg.path.to_string().as_str()).canonicalize().unwrap().to_str().unwrap()))
-        .window_size((window_width, window_height))
         .menu(|_, _, _| {
             menu::create_menu()
         });

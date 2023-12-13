@@ -9,6 +9,7 @@ use druid::Event;
 use image::{GenericImageView, DynamicImage};
 use num_traits::cast::FromPrimitive;
 use druid::Screen as dScreen;
+use image::imageops::FilterType;
 use screenshots::Screen;
 use crate::utils;
 
@@ -132,20 +133,18 @@ impl Widget<AppState> for DrawingWidget {
                         data.is_writing_text = true;
                     }
                     Action::Crop(ref mut prev_image, ref mut start_point, ref mut end_point) => {
-                        let x = ctx.window().get_position().x;
-                        #[cfg(target_os="macos")] 
-                        let y = ctx.window().get_position().y + data.title_bar_height;
-                        #[cfg(target_os="linux")] 
-                        let y = ctx.window().get_position().y + data.title_bar_height;
-                        #[cfg(target_os="windows")] 
-                        let y = ctx.window().get_position().y + data.title_bar_height;
-                        let width = ctx.size().width;
-                        let height = ctx.size().height;
+
+                        let mut x = ctx.window().get_position().x.floor();
+                        let mut y = ctx.window().get_position().y.floor() + data.title_bar_height;
+
+                        let mut width = ctx.size().width.ceil();
+                        let mut height = ctx.size().height.ceil();
+
                         #[cfg(not(target_os = "macos"))]
                         std::thread::sleep(std::time::Duration::from_millis(300));
                         ctx.set_active(true);
                         *prev_image = capture_image_area(Rect::new(x, y, width, height));
-                        data.image = ImageBuf::from_dynamic_image(prev_image.clone());
+                        ctx.request_layout();
                         *start_point = e.pos;
                         *end_point = e.pos;
                     }
@@ -259,6 +258,7 @@ impl Widget<AppState> for DrawingWidget {
         let monitor = dScreen::get_monitors().first().unwrap().clone();
         let monitor_width = monitor.virtual_work_rect().width();
         let monitor_height = monitor.virtual_work_rect().height();
+
 
         let image_width = data.image.width() as f64;
         let image_height = data.image.height() as f64;
