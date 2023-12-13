@@ -1,4 +1,3 @@
-use std::ops::Index;
 use crate::utils::{AppState, Action};
 use druid::{Cursor, Rect, Widget, Code, TextLayout, ImageBuf, Affine, FontDescriptor, FontFamily};
 use druid::RenderContext;
@@ -10,7 +9,6 @@ use druid::Event;
 use image::{GenericImageView, DynamicImage};
 use num_traits::cast::FromPrimitive;
 use druid::Screen as dScreen;
-use image::DynamicImage::ImageRgb8;
 use screenshots::Screen;
 use crate::utils;
 
