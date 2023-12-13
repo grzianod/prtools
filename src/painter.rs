@@ -133,7 +133,12 @@ impl Widget<AppState> for DrawingWidget {
                     }
                     Action::Crop(ref mut prev_image, ref mut start_point, ref mut end_point) => {
                         let x = ctx.window().get_position().x;
+                        #[cfg(target_os="macos")] 
                         let y = ctx.window().get_position().y - 3.5f64;
+                        #[cfg(target_os="linux")] 
+                        let y = ctx.window().get_position().y;
+                        #[cfg(target_os="windows")] 
+                        let y = ctx.window().get_position().y;
                         let width = ctx.size().width;
                         let height = ctx.size().height;
                         #[cfg(not(target_os = "macos"))]
@@ -528,7 +533,12 @@ impl Widget<AppState> for DrawingWidget {
 
         if data.save.get() {
             let x = ctx.window().get_position().x;
+            #[cfg(target_os="macos")] 
             let y = ctx.window().get_position().y - 3.5f64;
+            #[cfg(target_os="linux")] 
+            let y = ctx.window().get_position().y;
+            #[cfg(target_os="windows")] 
+            let y = ctx.window().get_position().y;
             let width = ctx.size().width;
             let height = ctx.size().height;
             #[cfg(not(target_os = "macos"))]
