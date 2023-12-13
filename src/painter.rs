@@ -9,7 +9,6 @@ use druid::Event;
 use image::{GenericImageView, DynamicImage};
 use num_traits::cast::FromPrimitive;
 use druid::Screen as dScreen;
-use image::imageops::FilterType;
 use screenshots::Screen;
 use crate::utils;
 
