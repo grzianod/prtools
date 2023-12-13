@@ -214,19 +214,19 @@ impl Widget<AppState> for DrawingWidget {
                 if let Some(Action::Crop(prev_image, start_point, end_point)) = data.actions.last_mut() {
                     *end_point = e.pos;
                     let mut x = start_point.x;
-                    let mut y = start_point.y;
+                    let mut y = start_point.y + data.title_bar_height;
                     let mut width = end_point.x - x;
-                    let mut height = end_point.y - y;
+                    let mut height = end_point.y - y + data.title_bar_height;
 
-                    x = (x * prev_image.width() as f64) / ctx.window().get_size().width;
-                    y = (y * prev_image.height() as f64) / ctx.window().get_size().height;
-                    width = (width * prev_image.width() as f64) / ctx.window().get_size().width;
-                    height = (height * prev_image.height() as f64) / ctx.window().get_size().height;
+                    x = ((x * prev_image.width() as f64) / ctx.size().width).floor();
+                    y = ((y * prev_image.height() as f64) / ctx.size().height).floor();
+                    width = ((width * prev_image.width() as f64) / ctx.size().width).ceil();
+                    height = ((height * prev_image.height() as f64) / ctx.size().height).ceil();
 
                     if data.extension.eq("png") || data.extension.eq("tiff") || data.extension.eq("bmp") {
-                        data.image = ImageBuf::from_dynamic_image(prev_image.crop(x.floor() as u32, y.floor() as u32, width.ceil() as u32, height.ceil() as u32));
+                        data.image = ImageBuf::from_dynamic_image(prev_image.crop(x as u32, y as u32, width as u32, height as u32));
                     } else {
-                        data.image = ImageBuf::from_dynamic_image_without_alpha(prev_image.crop(x.floor() as u32, y.floor() as u32, width.ceil() as u32, height.ceil() as u32));
+                        data.image = ImageBuf::from_dynamic_image_without_alpha(prev_image.crop(x as u32, y as u32, width as u32, height as u32));
                     }
                     data.actions.clear();
                     data.redo_actions.clear();
@@ -532,9 +532,9 @@ impl Widget<AppState> for DrawingWidget {
 
         if data.save.get() {
             let x = ctx.window().get_position().x;
-            let y = ctx.window().get_position().y - 3.0;
+            let y = ctx.window().get_position().y;
             let width = ctx.size().width;
-            let height = ctx.size().height -3.0;
+            let height = ctx.size().height;
             #[cfg(not(target_os = "macos"))]
             std::thread::sleep(std::time::Duration::from_millis(300));
             let image = capture_image_area(Rect::new(x, y, width, height));
