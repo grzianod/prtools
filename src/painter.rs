@@ -133,13 +133,14 @@ impl Widget<AppState> for DrawingWidget {
                     }
                     Action::Crop(ref mut prev_image, ref mut start_point, ref mut end_point) => {
                         let x = ctx.window().get_position().x;
-                        let y = ctx.window().get_position().y + data.title_bar_height;
+                        let y = ctx.window().get_position().y - 3.5f64;
                         let width = ctx.size().width;
                         let height = ctx.size().height;
                         #[cfg(not(target_os = "macos"))]
                         std::thread::sleep(std::time::Duration::from_millis(300));
                         ctx.set_active(true);
                         *prev_image = capture_image_area(Rect::new(x, y, width, height));
+                        data.image = ImageBuf::from_dynamic_image(prev_image.clone());
                         *start_point = e.pos;
                         *end_point = e.pos;
                     }
