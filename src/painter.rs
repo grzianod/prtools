@@ -135,7 +135,7 @@ impl Widget<AppState> for DrawingWidget {
                     }
                     Action::Crop(ref mut prev_image, ref mut start_point, ref mut end_point) => {
                         let x = ctx.window().get_position().x;
-                        let y = ctx.window().get_position().y + 5.0;
+                        let y = ctx.window().get_position().y + data.title_bar_height;
                         let width = ctx.size().width;
                         let height = ctx.size().height;
                         #[cfg(not(target_os = "macos"))]
@@ -214,9 +214,9 @@ impl Widget<AppState> for DrawingWidget {
                 if let Some(Action::Crop(prev_image, start_point, end_point)) = data.actions.last_mut() {
                     *end_point = e.pos;
                     let mut x = start_point.x;
-                    let mut y = start_point.y + data.title_bar_height;
+                    let mut y = start_point.y;
                     let mut width = end_point.x - x;
-                    let mut height = end_point.y - y + data.title_bar_height;
+                    let mut height = end_point.y - y ;
 
                     x = ((x * prev_image.width() as f64) / ctx.size().width).floor();
                     y = ((y * prev_image.height() as f64) / ctx.size().height).floor();
@@ -265,12 +265,10 @@ impl Widget<AppState> for DrawingWidget {
             data.scale_factor.set(image_width / monitor_width + 0.5f64);
             window_width = image_width / data.scale_factor.get();
             window_height = (image_height * window_width) / image_width;
-            data.center.set(Point::new(window_width / 2f64, window_height / 2f64));
         } else {
             data.scale_factor.set(image_height / monitor_height + 0.5f64);
             window_height = image_height / data.scale_factor.get();
             window_width = (image_width * window_height) / image_height;
-            data.center.set(Point::new(window_width / 2f64, window_height / 2f64));
         }
 
         ctx.window().set_size((window_width, window_height + data.title_bar_height));
@@ -532,7 +530,7 @@ impl Widget<AppState> for DrawingWidget {
 
         if data.save.get() {
             let x = ctx.window().get_position().x;
-            let y = ctx.window().get_position().y;
+            let y = ctx.window().get_position().y + data.title_bar_height;
             let width = ctx.size().width;
             let height = ctx.size().height;
             #[cfg(not(target_os = "macos"))]
@@ -546,6 +544,6 @@ impl Widget<AppState> for DrawingWidget {
 
 fn capture_image_area(rect: Rect) -> DynamicImage {
     let screens = Screen::all().unwrap();
-    let screen = screens.iter().map(|screen| { (screen, num_traits::abs(rect.x0 - screen.display_info.x as f64) as i32) }).min_by_key(|screen| { screen.1 }).unwrap().0;
-    return DynamicImage::ImageRgba8(screen.capture_area(num_traits::abs(rect.x0 - screen.display_info.x as f64) as i32, num_traits::abs(rect.y0 - screen.display_info.y as f64) as i32, rect.x1.ceil() as u32, rect.y1.ceil() as u32).unwrap());
+    let screen = screens.iter().map(|screen| { (screen, num_traits::abs(rect.x0.floor() as i32 - screen.display_info.x)) }).min_by_key(|screen| { screen.1 }).unwrap().0;
+    return DynamicImage::ImageRgba8(screen.capture_area(num_traits::abs(rect.x0.floor() as i32 - screen.display_info.x), num_traits::abs(rect.y0.floor() as i32 - screen.display_info.y), rect.x1.ceil() as u32, rect.y1.ceil() as u32).unwrap());
 }
