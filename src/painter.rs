@@ -534,12 +534,7 @@ impl Widget<AppState> for DrawingWidget {
 
         if data.save.get() {
             let x = ctx.window().get_position().x;
-            #[cfg(target_os="macos")]
-                let y = ctx.window().get_position().y + data.title_bar_height;
-            #[cfg(target_os="linux")]
-                let y = ctx.window().get_position().y + data.title_bar_height;
-            #[cfg(target_os="windows")]
-                let y = ctx.window().get_position().y + data.title_bar_height;
+            let y = ctx.window().get_position().y + data.title_bar_height;
             let width = ctx.size().width;
             let height = ctx.size().height;
             #[cfg(not(target_os = "macos"))]
