@@ -4,10 +4,6 @@ use druid::{Affine, Color, ImageBuf, Monitor, Point};
 use druid::{Data, Lens};
 use clap::Parser;
 use image::DynamicImage;
-#[cfg(target_os="windows")]
-use winapi::um::winuser::GetSystemMetrics;
-#[cfg(target_os="windows")]
-use winapi::um::winuser::SM_CYCAPTION;
 
 /// Annotation Tools
 #[derive(Parser, Debug)]

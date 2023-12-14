@@ -275,7 +275,10 @@ impl Widget<AppState> for DrawingWidget {
             window_width = (image_width * window_height) / image_height;
         }
 
+        #[cfg(not(target_os="windows"))]
         ctx.window().set_size((window_width, window_height + data.title_bar_height));
+        #[cfg(target_os="windows")]
+        ctx.window().set_size((window_width+4.5f64, window_height + data.title_bar_height));
         druid::Size::new(window_width, window_height)
     }
 
