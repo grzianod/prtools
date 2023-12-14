@@ -230,6 +230,7 @@ impl Widget<AppState> for DrawingWidget {
                     } else {
                         data.image = ImageBuf::from_dynamic_image_without_alpha(prev_image.crop(x as u32, y as u32, width as u32, height as u32));
                     }
+                    data.affine.clear();
                     data.actions.clear();
                     data.redo_actions.clear();
                     data.crop.set(false);
